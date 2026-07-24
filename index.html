@@ -1,0 +1,2229 @@
+<!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tovkentepa MFY - AI Glassmorphism Platforma</title>
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* GLASSMORPHISM STYLES (TUNGI REJIM) */
+        .dark .glass-panel {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .dark .glass-card {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .dark .glass-card:hover {
+            background: rgba(30, 41, 59, 0.7);
+            border-color: rgba(56, 189, 248, 0.3);
+            box-shadow: 0 10px 30px -10px rgba(56, 189, 248, 0.15);
+        }
+
+        /* GLASSMORPHISM STYLES (KUNDUZGI REJIM) */
+        html:not(.dark) .glass-panel {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+        }
+        html:not(.dark) .glass-card {
+            background: rgba(241, 245, 249, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        html:not(.dark) .glass-card:hover {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: rgba(14, 165, 233, 0.4);
+            box-shadow: 0 10px 30px -10px rgba(14, 165, 233, 0.15);
+        }
+
+        /* COMMON TAB & ANIMATION STYLES */
+        .active-tab {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%);
+            color: #38bdf8 !important;
+            border-left: 3px solid #38bdf8;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+        }
+        .tab-content { display: none; }
+        .tab-content.active { 
+            display: block; 
+            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* SIDEBAR TOGGLE TRANSITIONS */
+        .sidebar-expanded { width: 18rem; }
+        .sidebar-collapsed { width: 5rem; }
+        .sidebar-collapsed .menu-text { display: none; }
+        .sidebar-collapsed .logo-text { display: none; }
+        .sidebar-collapsed nav button { justify-content: center; padding-left: 0; padding-right: 0; }
+
+        /* 3D ISOMETRIC GRID STYLES */
+        .isometric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
+            gap: 12px;
+            max-height: 480px;
+            overflow-y: auto;
+            padding: 20px;
+            background: rgba(2, 6, 23, 0.6);
+            border-radius: 12px;
+            border: 1px dashed rgba(255, 255, 255, 0.15);
+        }
+
+        .house-block {
+            width: 36px;
+            height: 36px;
+            position: relative;
+            transform: rotateX(45deg) rotateZ(-45deg);
+            transform-style: preserve-3d;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .house-block:hover {
+            transform: rotateX(45deg) rotateZ(-45deg) translateZ(10px) scale(1.2);
+        }
+
+        .house-block .top {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 4px;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.4);
+        }
+
+        /* Status indicator colors */
+        .status-ok .top { background-color: #22c55e; box-shadow: 0 0 10px #22c55e; }
+        .status-process .top { background-color: #eab308; box-shadow: 0 0 10px #eab308; }
+        .status-bad .top { background-color: #ef4444; box-shadow: 0 0 10px #ef4444; }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.1); }
+        ::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, 0.5); border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-[#0b0f19] text-slate-800 dark:text-slate-100 font-sans antialiased h-screen overflow-hidden dark:bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] dark:from-slate-900 dark:via-[#0b0f19] dark:to-black transition-colors duration-300">
+
+    <div class="flex h-full w-full relative">
+        
+        <!-- CHAP MENYU -->
+        <aside id="sidebar" class="sidebar-expanded glass-panel flex flex-col justify-between h-screen flex-shrink-0 z-30 transition-all duration-300 ease-in-out border-r border-slate-200 dark:border-slate-800/80">
+            <div class="flex flex-col h-full overflow-hidden">
+                
+                <!-- Logo & Toggle Hamburger Tugmasi -->
+                <div class="p-4 border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between flex-shrink-0">
+                    <div class="flex items-center space-x-3 overflow-hidden">
+                        <div class="p-2.5 bg-gradient-to-tr from-blue-600 to-sky-400 rounded-xl text-white shadow-lg shadow-sky-500/20 flex-shrink-0">
+                            <i data-lucide="cpu" class="w-5 h-5"></i>
+                        </div>
+                        <div class="logo-text transition-opacity duration-200">
+                            <h1 class="font-bold text-base leading-tight text-slate-900 dark:text-white tracking-wide">TOVKENTEPA</h1>
+                            <p class="text-[10px] font-medium text-sky-600 dark:text-sky-400 tracking-wider">AI SYSTEM v3.0</p>
+                        </div>
+                    </div>
+                    <button onclick="toggleSidebar()" class="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800/60 rounded-lg transition">
+                        <i data-lucide="panel-left-close" id="toggle-icon" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <!-- Navigatsiya Tizimi -->
+                <nav class="flex-1 overflow-y-auto p-3 space-y-1.5">
+                    <button onclick="switchTab('dashboard')" id="btn-dashboard" class="active-tab w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium transition-all group">
+                        <i data-lucide="layout-dashboard" class="w-5 h-5 flex-shrink-0"></i>
+                        <span class="menu-text">Umumiy Dashboard</span>
+                    </button>
+                    <button onclick="switchTab('obod')" id="btn-obod" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white transition-all group">
+                        <i data-lucide="sprout" class="w-5 h-5 flex-shrink-0 text-teal-500"></i>
+                        <span class="menu-text">Obodonlashtirish & Eko</span>
+                    </button>
+                    <button onclick="switchTab('yettilik')" id="btn-yettilik" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white transition-all group">
+                        <i data-lucide="users" class="w-5 h-5 flex-shrink-0"></i>
+                        <span class="menu-text">Mahalla "Yettiligi + 1"</span>
+                    </button>
+                    <button onclick="switchTab('ehtiyojmand')" id="btn-ehtiyojmand" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white transition-all group">
+                        <i data-lucide="heart-handshake" class="w-5 h-5 flex-shrink-0"></i>
+                        <span class="menu-text">Ehtiyojmand Oilalar (9)</span>
+                    </button>
+                    <button onclick="switchTab('tadbirkorlik')" id="btn-tadbirkorlik" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white transition-all group">
+                        <i data-lucide="briefcase" class="w-5 h-5 flex-shrink-0"></i>
+                        <span class="menu-text">Biznes & 5 ga Yer</span>
+                    </button>
+                    <button onclick="switchTab('migrantlar')" id="btn-migrantlar" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white transition-all group">
+                        <i data-lucide="plane-takeoff" class="w-5 h-5 flex-shrink-0"></i>
+                        <span class="menu-text">Mehnat Migratsiyasi (10)</span>
+                    </button>
+                    <button onclick="switchTab('xavfsizlik')" id="btn-xavfsizlik" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white transition-all group">
+                        <i data-lucide="shield-check" class="w-5 h-5 flex-shrink-0"></i>
+                        <span class="menu-text">Xavfsizlik (10 Kamera)</span>
+                    </button>
+                    
+                    <div class="pt-3 border-t border-slate-200 dark:border-slate-800/80">
+                        <button onclick="switchTab('profile')" id="btn-profile" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white transition-all group">
+                            <i data-lucide="user-cog" class="w-5 h-5 flex-shrink-0 text-emerald-500"></i>
+                            <span class="menu-text">Shaxsiy kabinet & Admin</span>
+                        </button>
+                    </div>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- ASOSIY AMALIY SOHA -->
+        <main class="flex-1 flex flex-col overflow-y-auto h-screen relative z-10">
+            
+            <!-- HEADER -->
+            <header class="glass-panel sticky top-0 z-20 px-8 py-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-800/80">
+                <div>
+                    <h2 id="page-title" class="text-xl font-bold text-slate-900 dark:text-white tracking-wide">Yagona AI Boshqaruv Paneli</h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Toshkent shahri, Yashnobod tumani — Tovkentepa MFY</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="toggleTheme()" class="p-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-slate-700 dark:text-amber-400 hover:scale-105 transition border border-slate-300 dark:border-slate-700">
+                        <i data-lucide="sun" id="theme-icon-sun" class="w-4 h-4 hidden dark:block"></i>
+                        <i data-lucide="moon" id="theme-icon-moon" class="w-4 h-4 block dark:hidden"></i>
+                    </button>
+
+                    <div class="flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded-full text-emerald-600 dark:text-emerald-400 text-xs font-semibold shadow-inner">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse"></span>
+                        <span>Yashil Hudud (0 Jinoyatchilik)</span>
+                    </div>
+
+                    <button onclick="switchTab('profile')" class="text-right border-l border-slate-200 dark:border-slate-800/80 pl-4 flex items-center space-x-3 hover:opacity-80 transition">
+                        <div>
+                            <p class="text-sm font-semibold text-slate-900 dark:text-white" id="header-user-name">Po‘latov Mahkambek</p>
+                            <p class="text-xs text-sky-600 dark:text-sky-400 font-medium">Hokim yordamchisi (Admin)</p>
+                        </div>
+                        <div class="p-2 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl border border-emerald-500/30">
+                            <i data-lucide="user" class="w-5 h-5"></i>
+                        </div>
+                    </button>
+                </div>
+            </header>
+
+            <!-- BOʻLIMLAR -->
+            <div class="p-8 space-y-6">
+
+                <!-- TAB 1: UMUMIY DASHBOARD -->
+                <div id="tab-dashboard" class="tab-content active space-y-6">
+                    
+                    <!-- Top KPI Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+                        <div class="glass-card p-5 rounded-2xl flex items-center justify-between hover:-translate-y-1">
+                            <div>
+                                <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Aholi va Oilalar</p>
+                                <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1"><span id="val-aholi">2464</span> nafar</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1"><span id="val-oila">697</span> oila / <span id="val-xonadon">661</span> xonadon</p>
+                            </div>
+                            <div class="p-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl border border-blue-500/20"><i data-lucide="users" class="w-6 h-6"></i></div>
+                        </div>
+
+                        <div class="glass-card p-5 rounded-2xl flex flex-col justify-between hover:-translate-y-1 relative group">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Infratuzilma Statusi</p>
+                                    <h3 class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">100%</h3>
+                                </div>
+                                <div class="p-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl border border-emerald-500/20">
+                                    <i data-lucide="zap" class="w-6 h-6"></i>
+                                </div>
+                            </div>
+                            <div class="mt-3 pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                                <span class="text-xs text-slate-500 dark:text-slate-400">Suv, Gaz, Tok, Asfalt</span>
+                                <a href="https://mahkambekpolatov-tech.github.io/Smart_tovkentepa_kochalar/" target="_blank" class="inline-flex items-center space-x-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline">
+                                    <span>Ko'chalarni ko'rish</span>
+                                    <i data-lucide="external-link" class="w-3 h-3"></i>
+                                </a>
+                            </div>
+                        </div>
+
+                        <!-- 3-KARTOCHKA: OBODONLASHTIRISH ("YASHIL MAKON") - BOSILGANDA INTERAKTIV OYNA OCHILADI -->
+                        <div onclick="switchTab('obod')" class="glass-card p-5 rounded-2xl flex items-center justify-between hover:-translate-y-1 cursor-pointer hover:border-teal-500/50 transition">
+                            <div>
+                                <p class="text-xs font-medium text-teal-600 dark:text-teal-400 font-bold">Obodonlashtirish</p>
+                                <h3 class="text-2xl font-bold text-teal-600 dark:text-teal-400 mt-1">
+                                    <span id="val-daraxt">1,250</span> tub
+                                </h3>
+                                <p class="text-xs text-teal-600/80 dark:text-teal-300/80 mt-1 flex items-center space-x-1">
+                                    <span>3D Eko-Pasportni ochish</span>
+                                    <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                                </p>
+                            </div>
+                            <div class="p-3 bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-xl border border-teal-500/20">
+                                <i data-lucide="sprout" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+
+                        <div class="glass-card p-5 rounded-2xl flex items-center justify-between hover:-translate-y-1">
+                            <div>
+                                <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Ehtiyojmand Oilalar</p>
+                                <h3 class="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1"><span id="val-ehtiyojmand">9</span> ta</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">4 Qizil | 3 Sariq | 2 Yashil</p>
+                            </div>
+                            <div class="p-3 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-xl border border-amber-500/20"><i data-lucide="heart" class="w-6 h-6"></i></div>
+                        </div>
+                        
+                        <div class="glass-card p-5 rounded-2xl flex items-center justify-between hover:-translate-y-1">
+                            <div>
+                                <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Biznes & Yer</p>
+                                <h3 class="text-2xl font-bold text-sky-600 dark:text-sky-400 mt-1">17 Subyekt</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">+ 5 ga zaxira yer (Toshkent sh.)</p>
+                            </div>
+                            <div class="p-3 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-xl border border-sky-500/20"><i data-lucide="building-2" class="w-6 h-6"></i></div>
+                        </div>
+                    </div>
+
+                    <!-- AI Strategik Tavsiyalar Moduli -->
+                    <div class="glass-panel rounded-2xl p-6 border border-slate-200 dark:border-slate-700/50">
+                        <div class="flex items-center space-x-3 mb-5">
+                            <div class="p-2.5 bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-xl border border-indigo-500/30"><i data-lucide="sparkles" class="w-5 h-5"></i></div>
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">AI Avtomatik Strategik Tavsiyalar</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                            <div class="glass-card p-5 rounded-xl space-y-2">
+                                <h4 class="text-sm font-semibold text-amber-600 dark:text-amber-400 flex items-center space-x-2">
+                                    <i data-lucide="trending-up" class="w-4 h-4"></i>
+                                    <span>Kambag'allikni Yo'qotish</span>
+                                </h4>
+                                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                    Ehtiyojmand xonadonlarda ixcham bedanachilik va kasanachilik kooperatsiyasini yo'lga qo'yish orqali kambag'allik darajasini past darajada saqlash.
+                                </p>
+                            </div>
+                            <div class="glass-card p-5 rounded-xl space-y-2">
+                                <h4 class="text-sm font-semibold text-sky-600 dark:text-sky-400 flex items-center space-x-2">
+                                    <i data-lucide="factory" class="w-4 h-4"></i>
+                                    <span>Mahallani Ixtisoslashtirish</span>
+                                </h4>
+                                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                    5 ga zaxira yerida **Kichik Texnopark va Kooperatsiyalar** tashkil etish orqali hududni Shahar Sanoatiga va xizmat ko'rsatishga ixtisoslashtirish.
+                                </p>
+                            </div>
+                            <div class="glass-card p-5 rounded-xl space-y-2">
+                                <h4 class="text-sm font-semibold text-emerald-600 dark:text-emerald-400 flex items-center space-x-2">
+                                    <i data-lucide="shield" class="w-4 h-4"></i>
+                                    <span>Jinoyatchilik Profilaktikasi</span>
+                                </h4>
+                                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                    10 ta kuzatuv kamerasini AI videotahlil tizimiga ulab, tunu kun avtomatik monitoring olib borish va "Yashil hudud" ko'rsatkichini saqlash.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- YIL BOSHIGA NISBATAN REJALARNING BAJARILISH KO'RSATKICHLARI (KPI) -->
+                    <div class="glass-panel rounded-2xl p-6 border border-sky-500/30">
+                        <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-200 dark:border-slate-800">
+                            <div class="flex items-center space-x-3">
+                                <div class="p-2.5 bg-sky-500/20 text-sky-600 dark:text-sky-400 rounded-xl border border-sky-500/30">
+                                    <i data-lucide="target" class="w-6 h-6"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Yillik KPI va Rejalarning Bajarilish Ko'rsatkichlari</h3>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">Yil boshiga nisbatan o'sish dinamikasi va imtiyozli kreditlar limiti monitoringi</p>
+                                </div>
+                            </div>
+                            <span class="text-xs bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/30 px-3 py-1.5 rounded-full font-semibold">2026-Yil Reja Ijrosi</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                            <div class="glass-card p-5 rounded-xl space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Tadbirkorlik O'sishi</span>
+                                    <span class="text-xs bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold px-2 py-0.5 rounded border border-emerald-500/30">+5 ta Yangi Subyekt</span>
+                                </div>
+                                <div class="flex items-baseline space-x-2">
+                                    <h4 class="text-2xl font-bold text-slate-900 dark:text-white">125%</h4>
+                                    <span class="text-xs text-slate-500 dark:text-slate-400">/ Bajarilish Darajasi</span>
+                                </div>
+                                <div class="w-full bg-slate-200 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                                    <div class="bg-gradient-to-r from-blue-500 to-emerald-400 h-full rounded-full" style="width: 100%;"></div>
+                                </div>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400">Yil boshiga nisbatan tadbirkorlik subyektlari soni oshirildi.</p>
+                            </div>
+
+                            <div class="glass-card p-5 rounded-xl space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Kambag'allik Darajasi</span>
+                                    <span class="text-xs bg-sky-500/20 text-sky-600 dark:text-sky-400 font-bold px-2 py-0.5 rounded border border-sky-500/30">-2.0% Pasayish</span>
+                                </div>
+                                <div class="flex items-baseline space-x-2">
+                                    <h4 class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">1.0%</h4>
+                                    <span class="text-xs text-slate-500 dark:text-slate-400">/ Yil boshida: 3.0%</span>
+                                </div>
+                                <div class="w-full bg-slate-200 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                                    <div class="bg-gradient-to-r from-amber-500 to-emerald-400 h-full rounded-full" style="width: 100%;"></div>
+                                </div>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400">Reja bo'yicha erishilgan natija: <span class="text-emerald-600 dark:text-emerald-400 font-bold">125%</span></p>
+                            </div>
+
+                            <div class="glass-card p-5 rounded-xl space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Imtiyozli Kreditlar va Limit</span>
+                                    <span class="text-xs bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold px-2 py-0.5 rounded border border-amber-500/30">Qoldiq: 10 Mln</span>
+                                </div>
+                                <div class="flex items-baseline space-x-2">
+                                    <h4 class="text-2xl font-bold text-amber-600 dark:text-amber-400">80 Mln</h4>
+                                    <span class="text-xs text-slate-500 dark:text-slate-400">/ Limit: 90 Mln So'm</span>
+                                </div>
+                                <div class="w-full bg-slate-200 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                                    <div class="bg-gradient-to-r from-emerald-500 to-amber-400 h-full rounded-full" style="width: 88.8%;"></div>
+                                </div>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400">O'zlashtirish: <span class="text-amber-600 dark:text-amber-400 font-bold">88.8%</span> (10 Mln so'm limit qoldig'i)</p>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-slate-200 dark:border-slate-800">
+                            <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center space-x-2">
+                                <i data-lucide="award" class="w-4 h-4 text-amber-500 dark:text-amber-400"></i>
+                                <span>Ilg'or Tajribalar va Innovatsiyalar (Best Practices)</span>
+                            </h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="glass-card p-4 rounded-xl flex items-start space-x-3">
+                                    <div class="p-2 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-lg flex-shrink-0">
+                                        <i data-lucide="layers" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-bold text-slate-900 dark:text-white">"Bir Mahalla — Bir Mahsulot" Dasturi</p>
+                                        <p class="text-xs text-slate-600 dark:text-slate-300 mt-1">
+                                            Mahallada ishlab chiqarish va xizmat ko'rsatish zanjirini mahalliy kooperatsiyalar orqali yagona brend ostida shakllantirish.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="glass-card p-4 rounded-xl flex items-start space-x-3">
+                                    <div class="p-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg flex-shrink-0">
+                                        <i data-lucide="egg" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-bold text-slate-900 dark:text-white">Bedanachilik va Kasanachilik Kooperatsiyasi</p>
+                                        <p class="text-xs text-slate-600 dark:text-slate-300 mt-1">
+                                            Xonadonlarda kam joy va kam xarajat talab qiladigan bedanachilik hamda tikuv/hunarmandchilik kasanachiligini tashkil etish orqali oilalar daromadini oshirish.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- YANGI INTEGRATSIYA QILINGAN TAB: OBODONLASHTIRISH VA EKO-PASPORT MODULI -->
+                <div id="tab-obod" class="tab-content space-y-6">
+                    
+                    <!-- KPI Cards Section -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="glass-card p-4 rounded-xl">
+                            <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">JAMI XONADONLAR</p>
+                            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1">661 ta</h3>
+                        </div>
+                        <div class="glass-card p-4 rounded-xl">
+                            <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">NAMUNALI (EKO)</p>
+                            <h3 class="text-2xl font-bold text-emerald-500 mt-1" id="stat-ok-count">485 ta (73%)</h3>
+                        </div>
+                        <div class="glass-card p-4 rounded-xl">
+                            <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">JARAYONDA</p>
+                            <h3 class="text-2xl font-bold text-amber-500 mt-1" id="stat-process-count">132 ta (20%)</h3>
+                        </div>
+                        <div class="glass-card p-4 rounded-xl">
+                            <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">E'TIBOR TALAB</p>
+                            <h3 class="text-2xl font-bold text-rose-500 mt-1" id="stat-bad-count">44 ta (7%)</h3>
+                        </div>
+                    </div>
+
+                    <!-- Main Interactive Grid Section -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        
+                        <!-- 3D Interactive Map Area -->
+                        <div class="lg:col-span-2 glass-panel p-6 rounded-2xl space-y-4">
+                            <div class="flex flex-wrap items-center justify-between gap-3">
+                                <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+                                    <i data-lucide="boxes" class="w-5 h-5 text-sky-500"></i>
+                                    <span>Gibrid 3D Xonadonlar Indikatori</span>
+                                </h3>
+                                
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <select id="streetSelect" onchange="filterGrid()" class="bg-slate-200 dark:bg-slate-900 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700 text-xs rounded-lg p-2 outline-none">
+                                        <option value="all">Barcha koʻchalar (20 ta)</option>
+                                        <option value="Sartyuz">Sartyuz</option>
+                                        <option value="Piskom 1 o‘tar">Piskom 1 o‘tar</option>
+                                        <option value="Qalmoq">Qalmoq</option>
+                                        <option value="Ko‘k dala">Ko‘k dala</option>
+                                        <option value="Umaqay">Umaqay</option>
+                                        <option value="Aqchasoy">Aqchasoy</option>
+                                        <option value="Rangikamon">Rangikamon</option>
+                                        <option value="Murabbiylar">Murabbiylar</option>
+                                        <option value="Yangi xayot">Yangi xayot</option>
+                                        <option value="Pungan">Pungan</option>
+                                        <option value="Mang‘it">Mang‘it</option>
+                                        <option value="Aeroport">Aeroport</option>
+                                        <option value="M.Shoxtepa">M.Shoxtepa</option>
+                                        <option value="Shoxtepa 1-o‘tar">Shoxtepa 1-o‘tar</option>
+                                        <option value="Shoxtepa 2-o‘tar">Shoxtepa 2-o‘tar</option>
+                                        <option value="Shoxtepa 3-o‘tar">Shoxtepa 3-o‘tar</option>
+                                        <option value="Shoxtepa 4-o‘tar">Shoxtepa 4-o‘tar</option>
+                                        <option value="Yangi avlod">Yangi avlod</option>
+                                        <option value="Yangi hayot o‘tar">Yangi hayot o‘tar</option>
+                                        <option value="Yangi hayot 1 berk">Yangi hayot 1 berk</option>
+                                    </select>
+
+                                    <select id="statusSelect" onchange="filterGrid()" class="bg-slate-200 dark:bg-slate-900 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700 text-xs rounded-lg p-2 outline-none">
+                                        <option value="all">Barcha holatlar</option>
+                                        <option value="status-ok">🟢 Namunali</option>
+                                        <option value="status-process">🟡 Jarayonda</option>
+                                        <option value="status-bad">🔴 E'tibor talab</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="isometric-grid" id="houseGrid">
+                                <!-- 3D Bloklar JS orqali avtomatik yaratiladi -->
+                            </div>
+                        </div>
+
+                        <!-- Side Panel: Eko-Pasport -->
+                        <div class="glass-panel p-6 rounded-2xl space-y-4">
+                            <div>
+                                <h3 class="text-base font-bold text-slate-900 dark:text-white">Xonadon Eko-Pasporti</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">3D blok ustiga bosib xonadon ma'lumotlarini ko'ring.</p>
+                            </div>
+
+                            <div class="glass-card p-5 rounded-xl space-y-4" id="passportDetail">
+                                <div>
+                                    <span class="inline-block px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-500/20 text-emerald-500 border border-emerald-500/30" id="pBadge">🟢 Namunali xonadon</span>
+                                    <h2 id="pHouseNo" class="text-lg font-bold text-slate-900 dark:text-white mt-2">Sartyuz k., 12-uy</h2>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5" id="pResponsible">Mas'ul: MFY Ko'cha boshi</p>
+                                </div>
+                                
+                                <hr class="border-slate-200 dark:border-slate-700">
+
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">Obodonlashtirish Mezonlari:</h4>
+                                    <ul class="space-y-2 text-xs text-slate-600 dark:text-slate-300" id="pChecklist">
+                                        <!-- Check-list dinamik shakllanadi -->
+                                    </ul>
+                                </div>
+
+                                <div class="space-y-2 pt-2">
+                                    <button onclick="confirmAllCriteria()" class="w-full py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition shadow-lg shadow-emerald-600/30 flex items-center justify-center space-x-1.5">
+                                        <i data-lucide="check-circle" class="w-4 h-4"></i>
+                                        <span>Bajarilganlikni Tasdiqlash</span>
+                                    </button>
+                                    <button onclick="alert('AI topshiriq shakllantirildi va mas\'ullarga yuborildi!')" class="w-full py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl text-xs transition shadow-lg shadow-sky-600/30 flex items-center justify-center space-x-1.5">
+                                        <i data-lucide="bot" class="w-4 h-4"></i>
+                                        <span>AI Topshiriq Yuborish</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- TAB 2: MAHALLA YETTILIGI -->
+                <div id="tab-yettilik" class="tab-content space-y-6">
+                    <div class="glass-panel rounded-2xl p-6">
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-5">Mahalla "Yettiligi + 1" Boshqaruv Shtabi</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="grid-yettilik">
+                            <!-- JS orqali fill qilinadi -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: EHTIYOJMAND OILALAR -->
+                <div id="tab-ehtiyojmand" class="tab-content space-y-6">
+                    <div class="glass-panel rounded-2xl p-6">
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-5 gap-3">
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">9 ta Ehtiyojmand Oila Bo'yicha AI Manzilli Harakat Rejalari</h3>
+                            
+                            <a href="https://mahkambekpolatov-tech.github.io/Smart_ai_hodim/" target="_blank" class="inline-flex items-center space-x-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-lg shadow-sky-500/20 transition-all hover:scale-[1.03]">
+                                <i data-lucide="user-check" class="w-4 h-4"></i>
+                                <span>Individual ishlash</span>
+                                <i data-lucide="external-link" class="w-3.5 h-3.5 opacity-70"></i>
+                            </a>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm text-slate-700 dark:text-slate-300">
+                                <thead class="bg-slate-200/80 dark:bg-slate-900/80 text-xs uppercase text-slate-600 dark:text-slate-400 border-b border-slate-300 dark:border-slate-700/80">
+                                    <tr>
+                                        <th class="p-3">#</th>
+                                        <th class="p-3">F.I.SH / Manzil</th>
+                                        <th class="p-3">Toifa</th>
+                                        <th class="p-3">Haqiqiy Holati</th>
+                                        <th class="p-3">AI Manzilli Reja</th>
+                                        <th class="p-3 text-center">Amal</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-ehtiyojmand" class="divide-y divide-slate-200 dark:divide-slate-800/60">
+                                    <!-- JS orqali fill qilinadi -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 4: TADBIRKORLIK & YER -->
+                <div id="tab-tadbirkorlik" class="tab-content space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="glass-panel rounded-2xl p-6">
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">17 ta Tadbirkorlik Subyekti</h3>
+                            <ul class="space-y-3 text-sm text-slate-700 dark:text-slate-300" id="list-tadbirkorlar">
+                                <!-- JS orqali fill qilinadi -->
+                            </ul>
+                        </div>
+                        <div class="glass-panel rounded-2xl p-6">
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">5 ga Zaxira Yer Maydoni (Toshkent Sh.)</h3>
+                            <div class="space-y-4 text-sm">
+                                <div class="glass-card p-4 rounded-xl">
+                                    <p class="font-semibold text-sky-600 dark:text-sky-400">2.5 ga - Kichik Texnopark</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Shovqinsiz mebel, tekstil, poligrafiya va avtoservis sexlari.</p>
+                                </div>
+                                <div class="glass-card p-4 rounded-xl">
+                                    <p class="font-semibold text-emerald-600 dark:text-emerald-400">1.5 ga - Bedanachilik va Agro-Texnologiyalar</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Bedanachilik fermasi va ixcham issiqxonalar.</p>
+                                </div>
+                                <div class="glass-card p-4 rounded-xl">
+                                    <p class="font-semibold text-amber-600 dark:text-amber-400">1.0 ga - Sport va Servis Majmuasi</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Aholiga maishiy xizmat ko'rsatish pavilyonlari.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 5: MIGRANTLAR -->
+                <div id="tab-migrantlar" class="tab-content space-y-6">
+                    <div class="glass-panel rounded-2xl p-6">
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">10 Nafar Muvaffaqiyatli Mehnat Migranti</h3>
+                        <div class="glass-card p-5 rounded-xl">
+                            <p class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                                Tizim xorijdagi 10 nafar fuqaroning jamg'armalarini mahalladagi 5 ga zaxira yerda quriladigan Kichik Texnoparkka **investor sifatida jalb qilish** va ularning Tovkentepada yashayotgan oilalarini kasanachilikka biriktirish rejasini yuritadi.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 6: XAVFSIZLIK & 10 TA KAMERA MONITORIGI -->
+                <div id="tab-xavfsizlik" class="tab-content space-y-6">
+                    <div class="glass-panel rounded-2xl p-6 space-y-6">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">10 ta Kuzatuv Kamerasi Monitoringi</h3>
+                            <span class="text-xs bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/30">Status: Barcha kameralar faol</span>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-4" id="grid-kameralar">
+                            <!-- JS orqali fill qilinadi -->
+                        </div>
+
+                        <div class="glass-card rounded-xl p-5 border border-sky-500/30 space-y-3">
+                            <div class="flex items-center space-x-3">
+                                <div class="p-2 bg-sky-500/20 text-sky-600 dark:text-sky-400 rounded-lg">
+                                    <i data-lucide="sparkles" class="w-5 h-5"></i>
+                                </div>
+                                <h4 class="text-sm font-bold text-slate-900 dark:text-white">Xavfsizlik va Videotahlil Bo'yicha AI Tavsiyalari</h4>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                                <div class="bg-slate-200/60 dark:bg-slate-900/60 p-3.5 rounded-lg border border-slate-300 dark:border-slate-800">
+                                    <p class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center space-x-1.5">
+                                        <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
+                                        <span>Tungi Nazoratni Kuchaytirish</span>
+                                    </p>
+                                    <p class="text-[11px] text-slate-600 dark:text-slate-300 mt-1">
+                                        Pungan va Murabbiylar ko'chasi kesishmasidagi kameralar yordamida keki paytlardagi harakatlarni avtomatik rejimda qat'iy nazorat qilish.
+                                    </p>
+                                </div>
+                                <div class="bg-slate-200/60 dark:bg-slate-900/60 p-3.5 rounded-lg border border-slate-300 dark:border-slate-800">
+                                    <p class="text-xs font-semibold text-sky-600 dark:text-sky-400 flex items-center space-x-1.5">
+                                        <i data-lucide="video" class="w-3.5 h-3.5"></i>
+                                        <span>Smart Ovozli Ogohlantirish</span>
+                                    </p>
+                                    <p class="text-[11px] text-slate-600 dark:text-slate-300 mt-1">
+                                        Maktab va aholi zich yashaydigan hududlardagi kameralarga harakat sensorlarini moslashtirib, profilaktika inspektoriga onlayn xabar berishni faollashtirish.
+                                    </p>
+                                </div>
+                                <div class="bg-slate-200/60 dark:bg-slate-900/60 p-3.5 rounded-lg border border-slate-300 dark:border-slate-800">
+                                    <p class="text-xs font-semibold text-amber-600 dark:text-amber-400 flex items-center space-x-1.5">
+                                        <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                                        <span>"Yashil Hudud" Barqarorligi</span>
+                                    </p>
+                                    <p class="text-[11px] text-slate-600 dark:text-slate-300 mt-1">
+                                        Jinoyatchilikni 0 darajada saqlab qolish uchun jamoatchilik nazorati maskanlari bilan kameralar bazasini yagona tarmoqqa jamlash.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- TAB 7: SHAXSIY KABINET VA INTEGRATSIYA QILINGAN ADMIN PANEL -->
+                <div id="tab-profile" class="tab-content space-y-6">
+                    <div class="glass-panel rounded-2xl p-6 border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div class="flex items-center space-x-5">
+                            <div class="w-20 h-20 bg-gradient-to-tr from-sky-500 to-emerald-500 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-sky-500/20">
+                                PM
+                            </div>
+                            <div>
+                                <div class="flex items-center space-x-3">
+                                    <h3 class="text-xl font-bold text-slate-900 dark:text-white" id="profile-card-name">Po‘latov Mahkambek Abduvali o‘g‘li</h3>
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">SUPER ADMIN</span>
+                                </div>
+                                <p class="text-sm text-sky-600 dark:text-sky-400 font-medium mt-0.5">Tovkentepa MFY - Hokim yordamchisi</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center space-x-2">
+                                    <i data-lucide="phone" class="w-3.5 h-3.5"></i>
+                                    <span id="profile-card-phone">+998998659244</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3 w-full md:w-auto">
+                            <button onclick="saveAdminChanges()" class="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl text-sm transition shadow-lg shadow-emerald-900/40 flex items-center justify-center space-x-2">
+                                <i data-lucide="save" class="w-4 h-4"></i>
+                                <span>O'zgarishlarni Saqlash</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel border border-emerald-500/30 rounded-2xl p-6 shadow-2xl space-y-6">
+                        <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+                            <div>
+                                <h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+                                    <i data-lucide="sliders" class="w-5 h-5 text-emerald-500"></i>
+                                    <span>Tizim Boshqaruvi va KPI Sozlamalari (Admin Paneli)</span>
+                                </h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Shaxsiy kabinetingiz orqali platformaning barcha ko'rsatkichlarini onlayn tahrirlashingiz mumkin.</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="glass-card p-5 rounded-xl space-y-4">
+                                <h4 class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center space-x-1.5">
+                                    <i data-lucide="user-check" class="w-4 h-4"></i>
+                                    <span>1. Profil Ma'lumotlarini Tahrirlash</span>
+                                </h4>
+                                <div>
+                                    <label class="text-xs text-slate-500 dark:text-slate-400">Mas'ul F.I.SH</label>
+                                    <input type="text" id="inp-hy-name" value="Po‘latov Mahkambek Abduvali o‘g‘li" class="w-full mt-1 bg-white dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="text-xs text-slate-500 dark:text-slate-400">Telefon Raqami</label>
+                                    <input type="text" id="inp-hy-phone" value="+998998659244" class="w-full mt-1 bg-white dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 outline-none">
+                                </div>
+                            </div>
+
+                            <div class="glass-card p-5 rounded-xl space-y-4">
+                                <h4 class="text-xs font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wider flex items-center space-x-1.5">
+                                    <i data-lucide="database" class="w-4 h-4"></i>
+                                    <span>2. Mahalla Asosiy Ko'rsatkichlari (KPI)</span>
+                                </h4>
+                                <div class="grid grid-cols-3 gap-3">
+                                    <div>
+                                        <label class="text-[11px] text-slate-500 dark:text-slate-400">Aholi Soni</label>
+                                        <input type="number" id="inp-aholi" value="2464" class="w-full mt-1 bg-white dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-xs text-slate-900 dark:text-white focus:border-emerald-500 outline-none">
+                                    </div>
+                                    <div>
+                                        <label class="text-[11px] text-slate-500 dark:text-slate-400">Oilalar Soni</label>
+                                        <input type="number" id="inp-oila" value="697" class="w-full mt-1 bg-white dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-xs text-slate-900 dark:text-white focus:border-emerald-500 outline-none">
+                                    </div>
+                                    <div>
+                                        <label class="text-[11px] text-slate-500 dark:text-slate-400">Xonadonlar</label>
+                                        <input type="number" id="inp-xonadon" value="661" class="w-full mt-1 bg-white dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-xs text-slate-900 dark:text-white focus:border-emerald-500 outline-none">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- JAVASCRIPT LOGIKA VA BAZA -->
+    <script>
+        lucide.createIcons();
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                document.documentElement.classList.remove('dark');
+            } else {
+                document.documentElement.classList.add('dark');
+            }
+        }
+
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+            lucide.createIcons();
+        }
+
+        let isSidebarCollapsed = false;
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const toggleIcon = document.getElementById('toggle-icon');
+            
+            isSidebarCollapsed = !isSidebarCollapsed;
+            
+            if(isSidebarCollapsed) {
+                sidebar.classList.remove('sidebar-expanded');
+                sidebar.classList.add('sidebar-collapsed');
+                toggleIcon.setAttribute('data-lucide', 'panel-left-open');
+            } else {
+                sidebar.classList.remove('sidebar-collapsed');
+                sidebar.classList.add('sidebar-expanded');
+                toggleIcon.setAttribute('data-lucide', 'panel-left-close');
+            }
+            lucide.createIcons();
+        }
+
+        // DATABASE
+        const db = {
+            yettilik: [
+                { title: "Mahalla raisi", name: "Utegenov Abduvali", phone: "+998971671323" },
+                { title: "Hokim yordamchisi", name: "Po‘latov Mahkambek", phone: "+998998659244" },
+                { title: "Yoshlar yetakchisi", name: "Smanova Zarina", phone: "+998996086818" },
+                { title: "Xotin-qizlar faoli", name: "Beysenova Guljan", phone: "+998977153684" },
+                { title: "Profilaktika inspektori", name: "Karimov Xojiakbar", phone: "+998999855048" },
+                { title: "Ijtimoiy xodim", name: "Kamilova Indira", phone: "+998909242317" },
+                { title: "Soliq inspektori", name: "Boboyev Murodullo", phone: "+998935324284" },
+                { title: "Mahalla bankiri", name: "Turayev Zafar", phone: "+998930002569" }
+            ],
+            ehtiyojmand: [
+                { id: 1, name: "Bobomuradova Shaxnoza", address: "Yangi hayot, 18", status: "Qizil", desc: "3 ta yosh farzandli yolg'iz ona", plan: "MTMga biriktirish, bedanachilik va kasanachilikka tushirish" },
+                { id: 2, name: "Usmonova Hilola", address: "Shoxtepa 4-o'tar, 6", status: "Sariq", desc: "4 farzand, eri norasmiy taksichi", plan: "ZAGS rasmiylashtiruvi, pishiriqchilik va kasanachilik" },
+                { id: 3, name: "Mamirova Nagima", address: "Murabbiylar, 136", status: "Yashil", desc: "Er-xotin nogiron pensionerlar", plan: "Tibbiy patronaj, ixcham bedanachilik kooperatsiyasiga biriktirish" },
+                { id: 4, name: "Maxmuratov Nurmuxamad", address: "Pungan, 2", status: "Qizil", desc: "56 yoshli aqlan zaif fuqaro", plan: "Davlat nafaqasi, qaramog'idagi aka-ukalariga imtiyoz" },
+                { id: 5, name: "Xamroqulova Xilola", address: "Shoxtepa 4-o'tar, 6", status: "Sariq", desc: "Aqlan zaif 9 yoshli qizi bor", plan: "Inklyuziv ta'lim, onaga erkin grafikli kasanachilik" },
+                { id: 6, name: "Umarova Ziyoda", address: "Murabbiylar, 142", status: "Qizil", desc: "Eri va 1 yoshli bolasi surunkali bemor", plan: "Bepul davolanish (Order), onaga yengil uy kasanachiligi" },
+                { id: 7, name: "Shamaxmudova Adiba", address: "Murabbiylar, 166", status: "Qizil", desc: "Vafot etgan (RAK)", plan: "Platforma xatoligini to'g'rilash va reyestrdan chiqarish" },
+                { id: 8, name: "Ergasheva Ozoda", address: "Murabbiylar, 166", status: "Yashil", desc: "Yolg'iz ona (2 farzand)", plan: "Uy kasanachiligi va bedana tuxumi yetkazib berish" },
+                { id: 9, name: "Ag'ajanova Umida", address: "Pungan, 8", status: "Sariq", desc: "4 nafar yosh bola (0-4 yosh)", plan: "Tomorqa/ixcham parrandachilik, onaga onlayn-kasanachilik" }
+            ],
+            tadbirkorlar: [
+                "<b>2 ta Kafe:</b> 'Akmal baliq', 'Besh fish house'",
+                "<b>4 ta Ishlab chiqarish:</b> 2 ta Novvoyxona, 1 ta Porolon sexi, 1 ta Tikuvchilik sexi",
+                "<b>1 ta Tibbiyot:</b> 'Humo' MCHJ xususiy klinikasi",
+                "<b>10 ta Savdo/Maishiy:</b> Oziq-ovqat va maishiy xizmat shaxobchalari"
+            ],
+            kameralar: [
+                "1-Kamera: MFY binosi chorraha",
+                "2-Kamera: Maktab zonasi (2.2km)",
+                "3-Kamera: Yangi massiv (176 xonadon)",
+                "4-Kamera: Pungan ko'chasi kirish",
+                "5-Kamera: Murabbiylar ko'chasi",
+                "6-Kamera: Shoxtepa ko'chasi",
+                "7-Kamera: Yangi hayot ko'chasi",
+                "8-Kamera: 5 ga zaxira yer zonasi",
+                "9-Kamera: Bozor/Savdo shahobchasi",
+                "10-Kamera: MFY chiqish nazorati"
+            ]
+        };
+
+        // 661 TA XONADON UCHUN EKO-PASPORT SCRIPT LOGIKASI
+        const streets = [
+            "Sartyuz", "Piskom 1 o‘tar", "Qalmoq", "Ko‘k dala", "Umaqay", 
+            "Aqchasoy", "Rangikamon", "Murabbiylar", "Yangi xayot", "Pungan", 
+            "Mang‘it", "Aeroport", "M.Shoxtepa", "Shoxtepa 1-o‘tar", "Shoxtepa 2-o‘tar", 
+            "Shoxtepa 3-o‘tar", "Shoxtepa 4-o‘tar", "Yangi avlod", "Yangi hayot o‘tar", "Yangi hayot 1 berk"
+        ];
+
+        let selectedHouseId = 1;
+        const houseData = [];
+
+        for (let i = 1; i <= 661; i++) {
+            const street = streets[(i - 1) % streets.length];
+            
+            let status = 'status-ok';
+            if (i % 5 === 0) status = 'status-process';
+            if (i % 15 === 0) status = 'status-bad';
+
+            houseData.push({
+                id: i,
+                street: street,
+                houseNo: (i % 45) + 1,
+                status: status,
+                responsible: "MFY Ko'cha boshi",
+                criteria: [
+                    { id: 1, text: "Fasad va devorlar tartiblangan", status: status === 'status-ok' },
+                    { id: 2, text: "Yashil hudud va tomorqa mavjud", status: status !== 'status-bad' },
+                    { id: 3, text: "Chiqindi va sanitariya holati a'lo", status: status === 'status-ok' },
+                    { id: 4, text: "Ariqlar tozalangan", status: status !== 'status-bad' }
+                ]
+            });
+        }
+
+        function renderGrid(data) {
+            const grid = document.getElementById('houseGrid');
+            if(!grid) return;
+            grid.innerHTML = '';
+
+            data.forEach(item => {
+                const block = document.createElement('div');
+                block.className = `house-block ${item.status}`;
+                block.setAttribute('data-street', item.street);
+                block.setAttribute('data-status', item.status);
+                
+                block.innerHTML = `<div class="top" title="${item.street}, ${item.houseNo}-uy"></div>`;
+                
+                block.onclick = () => showPassport(item);
+                grid.appendChild(block);
+            });
+
+            updateStatCounts();
+        }
+
+        function updateStatCounts() {
+            const okCount = houseData.filter(h => h.status === 'status-ok').length;
+            const processCount = houseData.filter(h => h.status === 'status-process').length;
+            const badCount = houseData.filter(h => h.status === 'status-bad').length;
+
+            const total = houseData.length;
+            document.getElementById('stat-ok-count').innerText = `${okCount} ta (${Math.round(okCount/total*100)}%)`;
+            document.getElementById('stat-process-count').innerText = `${processCount} ta (${Math.round(processCount/total*100)}%)`;
+            document.getElementById('stat-bad-count').innerText = `${badCount} ta (${Math.round(badCount/total*100)}%)`;
+        }
+
+        function showPassport(item) {
+            selectedHouseId = item.id;
+            document.getElementById('pHouseNo').innerText = `${item.street}, ${item.houseNo}-uy`;
+            document.getElementById('pResponsible').innerText = `Mas'ul: ${item.responsible}`;
+            
+            const badge = document.getElementById('pBadge');
+
+            if (item.status === 'status-ok') {
+                badge.className = 'inline-block px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-500/20 text-emerald-500 border border-emerald-500/30';
+                badge.innerText = '🟢 Namunali xonadon';
+            } else if (item.status === 'status-process') {
+                badge.className = 'inline-block px-2.5 py-1 rounded-md text-xs font-bold bg-amber-500/20 text-amber-500 border border-amber-500/30';
+                badge.innerText = '🟡 Jarayonda (Hashar)';
+            } else {
+                badge.className = 'inline-block px-2.5 py-1 rounded-md text-xs font-bold bg-rose-500/20 text-rose-500 border border-rose-500/30';
+                badge.innerText = '🔴 E\'tibor talab';
+            }
+
+            renderChecklist(item);
+        }
+
+        function renderChecklist(item) {
+            const checklist = document.getElementById('pChecklist');
+            checklist.innerHTML = '';
+
+            item.criteria.forEach(c => {
+                const li = document.createElement('li');
+                li.className = 'flex items-center justify-between p-2 rounded-lg bg-slate-200/50 dark:bg-slate-900/50 hover:bg-slate-200 dark:hover:bg-slate-800/80 cursor-pointer transition border border-slate-300/50 dark:border-slate-800';
+                li.onclick = () => toggleCriterion(c.id);
+
+                li.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <span>${c.status ? '✅' : '⚠️'}</span>
+                        <span class="text-xs ${c.status ? 'text-slate-800 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}">${c.text}</span>
+                    </div>
+                    <input type="checkbox" ${c.status ? 'checked' : ''} class="w-3.5 h-3.5 text-emerald-500 bg-transparent pointer-events-none">
+                `;
+                checklist.appendChild(li);
+            });
+        }
+
+        function toggleCriterion(criterionId) {
+            const house = houseData.find(h => h.id === selectedHouseId);
+            if (!house) return;
+
+            const c = house.criteria.find(x => x.id === criterionId);
+            if (c) {
+                c.status = !c.status;
+            }
+
+            const allTrue = house.criteria.every(x => x.status);
+            const anyTrue = house.criteria.some(x => x.status);
+
+            if (allTrue) {
+                house.status = 'status-ok';
+            } else if (anyTrue) {
+                house.status = 'status-process';
+            } else {
+                house.status = 'status-bad';
+            }
+
+            filterGrid();
+            showPassport(house);
+        }
+
+        function confirmAllCriteria() {
+            const house = houseData.find(h => h.id === selectedHouseId);
+            if (!house) return;
+
+            house.criteria.forEach(c => c.status = true);
+            house.status = 'status-ok';
+
+            filterGrid();
+            showPassport(house);
+        }
+
+        function filterGrid() {
+            const selectedStreet = document.getElementById('streetSelect').value;
+            const selectedStatus = document.getElementById('statusSelect').value;
+
+            const filtered = houseData.filter(item => {
+                const streetMatch = (selectedStreet === 'all') || (item.street === selectedStreet);
+                const statusMatch = (selectedStatus === 'all') || (item.status === selectedStatus);
+                return streetMatch && statusMatch;
+            });
+
+            renderGrid(filtered);
+        }
+
+        // TAB SWITCHING LOGIC
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('nav button').forEach(el => el.classList.remove('active-tab'));
+            
+            document.getElementById('tab-' + tabId).classList.add('active');
+            
+            const btn = document.getElementById('btn-' + tabId);
+            if(btn) btn.classList.add('active-tab');
+
+            const titles = {
+                'dashboard': 'Umumiy AI Boshqaruv Paneli',
+                'obod': 'Obodonlashtirish va Koʻkalamzorlashtirish (Eko-Pasport) AI Dashbordi',
+                'yettilik': 'Mahalla "Yettiligi + 1" Boshqaruv Shtabi',
+                'ehtiyojmand': '9 ta Ehtiyojmand Oila Bo\'yicha Manzilli Reja',
+                'tadbirkorlik': 'Biznes Subyektlari va 5 ga Zaxira Yer',
+                'migrantlar': 'Tashqi Mehnat Migratsiyasi (10 Nafar)',
+                'xavfsizlik': 'Xavfsizlik va 10 ta Kuzatuv Kamerasi Monitoringi',
+                'profile': 'Shaxsiy Kabinet va Admin Boshqaruv Paneli'
+            };
+            document.getElementById('page-title').innerText = titles[tabId];
+        }
+
+        // RENDER SYSTEM
+        function renderSystem() {
+            document.getElementById('grid-yettilik').innerHTML = db.yettilik.map(x => `
+                <div class="glass-card p-4 rounded-xl">
+                    <p class="text-xs text-slate-500 dark:text-slate-400">${x.title}</p>
+                    <p class="font-bold text-slate-900 dark:text-white mt-1">${x.name}</p>
+                    <p class="text-xs text-emerald-600 dark:text-emerald-400 mt-2 flex items-center space-x-1">
+                        <i data-lucide="phone" class="w-3 h-3"></i>
+                        <span>${x.phone}</span>
+                    </p>
+                </div>
+            `).join('');
+
+            document.getElementById('table-ehtiyojmand').innerHTML = db.ehtiyojmand.map(x => {
+                const badgeColor = x.status === 'Qizil' ? 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30' : (x.status === 'Sariq' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30');
+                return `
+                    <tr class="hover:bg-slate-200/40 dark:hover:bg-slate-800/30 transition">
+                        <td class="p-3 font-bold text-slate-400 dark:text-slate-500">${x.id}</td>
+                        <td class="p-3"><p class="font-semibold text-slate-900 dark:text-white">${x.name}</p><p class="text-xs text-slate-500 dark:text-slate-400">${x.address}</p></td>
+                        <td class="p-3"><span class="px-2.5 py-1 text-xs rounded-full border ${badgeColor}">${x.status}</span></td>
+                        <td class="p-3 text-xs text-slate-600 dark:text-slate-300">${x.desc}</td>
+                        <td class="p-3 text-xs text-sky-600 dark:text-sky-300 font-medium">${x.plan}</td>
+                        <td class="p-3 text-center">
+                            <a href="https://mahkambekpolatov-tech.github.io/Smart_ai_hodim/" target="_blank" class="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-500/30 rounded-lg text-xs font-semibold transition hover:scale-105">
+                                <i data-lucide="user-check" class="w-3.5 h-3.5"></i>
+                                <span>Individual ishlash</span>
+                            </a>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.getElementById('list-tadbirkorlar').innerHTML = db.tadbirkorlar.map(x => `
+                <li class="glass-card p-3 rounded-xl flex items-center space-x-3">
+                    <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0"></i>
+                    <span>${x}</span>
+                </li>
+            `).join('');
+
+            document.getElementById('grid-kameralar').innerHTML = db.kameralar.map((x) => `
+                <div class="glass-card p-3 rounded-xl text-center">
+                    <div class="w-full h-20 bg-slate-200 dark:bg-slate-950/80 rounded-lg flex items-center justify-center text-slate-400 dark:text-slate-600 mb-2 border border-slate-300 dark:border-slate-800/80 relative">
+                        <i data-lucide="video" class="w-6 h-6"></i>
+                        <span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse"></span>
+                    </div>
+                    <p class="text-xs text-slate-700 dark:text-slate-300 font-semibold">${x}</p>
+                </div>
+            `).join('');
+
+            renderGrid(houseData);
+            if (houseData.length > 0) {
+                showPassport(houseData[0]);
+            }
+            lucide.createIcons();
+        }
+
+        function saveAdminChanges() {
+            const newName = document.getElementById('inp-hy-name').value;
+            const newPhone = document.getElementById('inp-hy-phone').value;
+
+            document.getElementById('val-aholi').innerText = document.getElementById('inp-aholi').value;
+            document.getElementById('val-oila').innerText = document.getElementById('inp-oila').value;
+            document.getElementById('val-xonadon').innerText = document.getElementById('inp-xonadon').value;
+
+            document.getElementById('header-user-name').innerText = newName.split(' ')[0] + ' ' + (newName.split(' ')[1] || '');
+            document.getElementById('profile-card-name').innerText = newName;
+            document.getElementById('profile-card-phone').innerText = newPhone;
+
+            db.yettilik[1].name = newName;
+            db.yettilik[1].phone = newPhone;
+
+            renderSystem();
+            alert("Barcha admin va shaxsiy kabinet o'zgarishlari saqlandi!");
+            switchTab('dashboard');
+        }
+
+        initTheme();
+        renderSystem();
+    </script>
+</body>
+</html><!DOCTYPE html>
+<html lang="uz">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Tovkentepa MFY - AI Glassmorphism Platforma</title>
+    <!-- Tailwind CSS (CDN) -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+        }
+    </script>
+    <!-- Lucide Icons -->
+    <script src="https://unpkg.com/lucide@latest"></script>
+    <style>
+        /* GLASSMORPHISM STYLES (TUNGI REJIM) */
+        .dark .glass-panel {
+            background: rgba(15, 23, 42, 0.65);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(255, 255, 255, 0.08);
+        }
+        .dark .glass-card {
+            background: rgba(30, 41, 59, 0.4);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .dark .glass-card:hover {
+            background: rgba(30, 41, 59, 0.7);
+            border-color: rgba(56, 189, 248, 0.3);
+            box-shadow: 0 10px 30px -10px rgba(56, 189, 248, 0.15);
+        }
+
+        /* GLASSMORPHISM STYLES (KUNDUZGI REJIM) */
+        html:not(.dark) .glass-panel {
+            background: rgba(255, 255, 255, 0.75);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid rgba(0, 0, 0, 0.08);
+        }
+        html:not(.dark) .glass-card {
+            background: rgba(241, 245, 249, 0.8);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(0, 0, 0, 0.05);
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        html:not(.dark) .glass-card:hover {
+            background: rgba(255, 255, 255, 0.95);
+            border-color: rgba(14, 165, 233, 0.4);
+            box-shadow: 0 10px 30px -10px rgba(14, 165, 233, 0.15);
+        }
+
+        /* COMMON TAB & ANIMATION STYLES */
+        .active-tab {
+            background: linear-gradient(135deg, rgba(56, 189, 248, 0.2) 0%, rgba(59, 130, 246, 0.1) 100%);
+            color: #38bdf8 !important;
+            border-left: 3px solid #38bdf8;
+            box-shadow: 0 0 15px rgba(56, 189, 248, 0.2);
+        }
+        .tab-content { display: none; }
+        .tab-content.active { 
+            display: block; 
+            animation: fadeIn 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(8px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        /* SIDEBAR TOGGLE TRANSITIONS */
+        .sidebar-expanded { width: 18rem; }
+        .sidebar-collapsed { width: 5rem; }
+        .sidebar-collapsed .menu-text { display: none; }
+        .sidebar-collapsed .logo-text { display: none; }
+        .sidebar-collapsed nav button { justify-content: center; padding-left: 0; padding-right: 0; }
+
+        /* 3D ISOMETRIC GRID STYLES */
+        .isometric-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(38px, 1fr));
+            gap: 12px;
+            max-height: 480px;
+            overflow-y: auto;
+            padding: 20px;
+            background: rgba(2, 6, 23, 0.6);
+            border-radius: 12px;
+            border: 1px dashed rgba(255, 255, 255, 0.15);
+        }
+
+        .house-block {
+            width: 36px;
+            height: 36px;
+            position: relative;
+            transform: rotateX(45deg) rotateZ(-45deg);
+            transform-style: preserve-3d;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .house-block:hover {
+            transform: rotateX(45deg) rotateZ(-45deg) translateZ(10px) scale(1.2);
+        }
+
+        .house-block .top {
+            position: absolute;
+            width: 100%;
+            height: 100%;
+            border-radius: 4px;
+            box-shadow: inset 0 0 5px rgba(0,0,0,0.4);
+        }
+
+        /* Status indicator colors */
+        .status-ok .top { background-color: #22c55e; box-shadow: 0 0 10px #22c55e; }
+        .status-process .top { background-color: #eab308; box-shadow: 0 0 10px #eab308; }
+        .status-bad .top { background-color: #ef4444; box-shadow: 0 0 10px #ef4444; }
+
+        /* Custom scrollbar */
+        ::-webkit-scrollbar { width: 5px; }
+        ::-webkit-scrollbar-track { background: rgba(15, 23, 42, 0.1); }
+        ::-webkit-scrollbar-thumb { background: rgba(100, 116, 139, 0.5); border-radius: 4px; }
+    </style>
+</head>
+<body class="bg-slate-50 dark:bg-[#0b0f19] text-slate-800 dark:text-slate-100 font-sans antialiased h-screen overflow-hidden dark:bg-[radial-gradient(ellipse_at_top,_var(--tw-gradient-stops))] dark:from-slate-900 dark:via-[#0b0f19] dark:to-black transition-colors duration-300">
+
+    <div class="flex h-full w-full relative">
+        
+        <!-- CHAP MENYU -->
+        <aside id="sidebar" class="sidebar-expanded glass-panel flex flex-col justify-between h-screen flex-shrink-0 z-30 transition-all duration-300 ease-in-out border-r border-slate-200 dark:border-slate-800/80">
+            <div class="flex flex-col h-full overflow-hidden">
+                
+                <!-- Logo & Toggle Hamburger Tugmasi -->
+                <div class="p-4 border-b border-slate-200 dark:border-slate-800/80 flex items-center justify-between flex-shrink-0">
+                    <div class="flex items-center space-x-3 overflow-hidden">
+                        <div class="p-2.5 bg-gradient-to-tr from-blue-600 to-sky-400 rounded-xl text-white shadow-lg shadow-sky-500/20 flex-shrink-0">
+                            <i data-lucide="cpu" class="w-5 h-5"></i>
+                        </div>
+                        <div class="logo-text transition-opacity duration-200">
+                            <h1 class="font-bold text-base leading-tight text-slate-900 dark:text-white tracking-wide">TOVKENTEPA</h1>
+                            <p class="text-[10px] font-medium text-sky-600 dark:text-sky-400 tracking-wider">AI SYSTEM v3.0</p>
+                        </div>
+                    </div>
+                    <button onclick="toggleSidebar()" class="p-2 text-slate-500 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-200/60 dark:hover:bg-slate-800/60 rounded-lg transition">
+                        <i data-lucide="panel-left-close" id="toggle-icon" class="w-5 h-5"></i>
+                    </button>
+                </div>
+
+                <!-- Navigatsiya Tizimi -->
+                <nav class="flex-1 overflow-y-auto p-3 space-y-1.5">
+                    <button onclick="switchTab('dashboard')" id="btn-dashboard" class="active-tab w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium transition-all group">
+                        <i data-lucide="layout-dashboard" class="w-5 h-5 flex-shrink-0"></i>
+                        <span class="menu-text">Umumiy Dashboard</span>
+                    </button>
+                    <button onclick="switchTab('obod')" id="btn-obod" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white transition-all group">
+                        <i data-lucide="sprout" class="w-5 h-5 flex-shrink-0 text-teal-500"></i>
+                        <span class="menu-text">Obodonlashtirish & Eko</span>
+                    </button>
+                    <button onclick="switchTab('yettilik')" id="btn-yettilik" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white transition-all group">
+                        <i data-lucide="users" class="w-5 h-5 flex-shrink-0"></i>
+                        <span class="menu-text">Mahalla "Yettiligi + 1"</span>
+                    </button>
+                    <button onclick="switchTab('ehtiyojmand')" id="btn-ehtiyojmand" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white transition-all group">
+                        <i data-lucide="heart-handshake" class="w-5 h-5 flex-shrink-0"></i>
+                        <span class="menu-text">Ehtiyojmand Oilalar (9)</span>
+                    </button>
+                    <button onclick="switchTab('tadbirkorlik')" id="btn-tadbirkorlik" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white transition-all group">
+                        <i data-lucide="briefcase" class="w-5 h-5 flex-shrink-0"></i>
+                        <span class="menu-text">Biznes & 5 ga Yer</span>
+                    </button>
+                    <button onclick="switchTab('migrantlar')" id="btn-migrantlar" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white transition-all group">
+                        <i data-lucide="plane-takeoff" class="w-5 h-5 flex-shrink-0"></i>
+                        <span class="menu-text">Mehnat Migratsiyasi (10)</span>
+                    </button>
+                    <button onclick="switchTab('xavfsizlik')" id="btn-xavfsizlik" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white transition-all group">
+                        <i data-lucide="shield-check" class="w-5 h-5 flex-shrink-0"></i>
+                        <span class="menu-text">Xavfsizlik (10 Kamera)</span>
+                    </button>
+                    
+                    <div class="pt-3 border-t border-slate-200 dark:border-slate-800/80">
+                        <button onclick="switchTab('profile')" id="btn-profile" class="w-full flex items-center space-x-3 px-3.5 py-3 rounded-xl text-sm font-medium text-slate-600 dark:text-slate-400 hover:bg-slate-200/50 dark:hover:bg-slate-800/50 hover:text-slate-900 dark:hover:text-white transition-all group">
+                            <i data-lucide="user-cog" class="w-5 h-5 flex-shrink-0 text-emerald-500"></i>
+                            <span class="menu-text">Shaxsiy kabinet & Admin</span>
+                        </button>
+                    </div>
+                </nav>
+            </div>
+        </aside>
+
+        <!-- ASOSIY AMALIY SOHA -->
+        <main class="flex-1 flex flex-col overflow-y-auto h-screen relative z-10">
+            
+            <!-- HEADER -->
+            <header class="glass-panel sticky top-0 z-20 px-8 py-4 flex items-center justify-between border-b border-slate-200 dark:border-slate-800/80">
+                <div>
+                    <h2 id="page-title" class="text-xl font-bold text-slate-900 dark:text-white tracking-wide">Yagona AI Boshqaruv Paneli</h2>
+                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5">Toshkent shahri, Yashnobod tumani — Tovkentepa MFY</p>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <button onclick="toggleTheme()" class="p-2.5 rounded-xl bg-slate-200/80 dark:bg-slate-800/80 text-slate-700 dark:text-amber-400 hover:scale-105 transition border border-slate-300 dark:border-slate-700">
+                        <i data-lucide="sun" id="theme-icon-sun" class="w-4 h-4 hidden dark:block"></i>
+                        <i data-lucide="moon" id="theme-icon-moon" class="w-4 h-4 block dark:hidden"></i>
+                    </button>
+
+                    <div class="flex items-center space-x-2 bg-emerald-500/10 border border-emerald-500/30 px-3 py-1.5 rounded-full text-emerald-600 dark:text-emerald-400 text-xs font-semibold shadow-inner">
+                        <span class="w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse"></span>
+                        <span>Yashil Hudud (0 Jinoyatchilik)</span>
+                    </div>
+
+                    <button onclick="switchTab('profile')" class="text-right border-l border-slate-200 dark:border-slate-800/80 pl-4 flex items-center space-x-3 hover:opacity-80 transition">
+                        <div>
+                            <p class="text-sm font-semibold text-slate-900 dark:text-white" id="header-user-name">Po‘latov Mahkambek</p>
+                            <p class="text-xs text-sky-600 dark:text-sky-400 font-medium">Hokim yordamchisi (Admin)</p>
+                        </div>
+                        <div class="p-2 bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 rounded-xl border border-emerald-500/30">
+                            <i data-lucide="user" class="w-5 h-5"></i>
+                        </div>
+                    </button>
+                </div>
+            </header>
+
+            <!-- BOʻLIMLAR -->
+            <div class="p-8 space-y-6">
+
+                <!-- TAB 1: UMUMIY DASHBOARD -->
+                <div id="tab-dashboard" class="tab-content active space-y-6">
+                    
+                    <!-- Top KPI Cards -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-5">
+                        <div class="glass-card p-5 rounded-2xl flex items-center justify-between hover:-translate-y-1">
+                            <div>
+                                <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Aholi va Oilalar</p>
+                                <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1"><span id="val-aholi">2464</span> nafar</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1"><span id="val-oila">697</span> oila / <span id="val-xonadon">661</span> xonadon</p>
+                            </div>
+                            <div class="p-3 bg-blue-500/10 text-blue-600 dark:text-blue-400 rounded-xl border border-blue-500/20"><i data-lucide="users" class="w-6 h-6"></i></div>
+                        </div>
+
+                        <div class="glass-card p-5 rounded-2xl flex flex-col justify-between hover:-translate-y-1 relative group">
+                            <div class="flex items-center justify-between">
+                                <div>
+                                    <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Infratuzilma Statusi</p>
+                                    <h3 class="text-2xl font-bold text-emerald-600 dark:text-emerald-400 mt-1">100%</h3>
+                                </div>
+                                <div class="p-3 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-xl border border-emerald-500/20">
+                                    <i data-lucide="zap" class="w-6 h-6"></i>
+                                </div>
+                            </div>
+                            <div class="mt-3 pt-2 border-t border-slate-200 dark:border-slate-800 flex items-center justify-between">
+                                <span class="text-xs text-slate-500 dark:text-slate-400">Suv, Gaz, Tok, Asfalt</span>
+                                <a href="https://mahkambekpolatov-tech.github.io/Smart_tovkentepa_kochalar/" target="_blank" class="inline-flex items-center space-x-1 text-xs font-bold text-emerald-600 dark:text-emerald-400 hover:underline">
+                                    <span>Ko'chalarni ko'rish</span>
+                                    <i data-lucide="external-link" class="w-3 h-3"></i>
+                                </a>
+                            </div>
+                        </div>
+
+                        <div onclick="switchTab('obod')" class="glass-card p-5 rounded-2xl flex items-center justify-between hover:-translate-y-1 cursor-pointer hover:border-teal-500/50 transition">
+                            <div>
+                                <p class="text-xs font-medium text-teal-600 dark:text-teal-400 font-bold">Obodonlashtirish</p>
+                                <h3 class="text-2xl font-bold text-teal-600 dark:text-teal-400 mt-1">
+                                    <span id="val-daraxt">1,250</span> tub
+                                </h3>
+                                <p class="text-xs text-teal-600/80 dark:text-teal-300/80 mt-1 flex items-center space-x-1">
+                                    <span>3D Eko-Pasportni ochish</span>
+                                    <i data-lucide="arrow-right" class="w-3 h-3"></i>
+                                </p>
+                            </div>
+                            <div class="p-3 bg-teal-500/10 text-teal-600 dark:text-teal-400 rounded-xl border border-teal-500/20">
+                                <i data-lucide="sprout" class="w-6 h-6"></i>
+                            </div>
+                        </div>
+
+                        <div class="glass-card p-5 rounded-2xl flex items-center justify-between hover:-translate-y-1">
+                            <div>
+                                <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Ehtiyojmand Oilalar</p>
+                                <h3 class="text-2xl font-bold text-amber-600 dark:text-amber-400 mt-1"><span id="val-ehtiyojmand">9</span> ta</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">4 Qizil | 3 Sariq | 2 Yashil</p>
+                            </div>
+                            <div class="p-3 bg-amber-500/10 text-amber-600 dark:text-amber-400 rounded-xl border border-amber-500/20"><i data-lucide="heart" class="w-6 h-6"></i></div>
+                        </div>
+                        
+                        <div class="glass-card p-5 rounded-2xl flex items-center justify-between hover:-translate-y-1">
+                            <div>
+                                <p class="text-xs font-medium text-slate-500 dark:text-slate-400">Biznes & Yer</p>
+                                <h3 class="text-2xl font-bold text-sky-600 dark:text-sky-400 mt-1">17 Subyekt</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">+ 5 ga zaxira yer (Toshkent sh.)</p>
+                            </div>
+                            <div class="p-3 bg-sky-500/10 text-sky-600 dark:text-sky-400 rounded-xl border border-sky-500/20"><i data-lucide="building-2" class="w-6 h-6"></i></div>
+                        </div>
+                    </div>
+
+                    <!-- AI Strategik Tavsiyalar Moduli -->
+                    <div class="glass-panel rounded-2xl p-6 border border-slate-200 dark:border-slate-700/50">
+                        <div class="flex items-center space-x-3 mb-5">
+                            <div class="p-2.5 bg-indigo-500/20 text-indigo-600 dark:text-indigo-400 rounded-xl border border-indigo-500/30"><i data-lucide="sparkles" class="w-5 h-5"></i></div>
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">AI Avtomatik Strategik Tavsiyalar</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-5">
+                            <div class="glass-card p-5 rounded-xl space-y-2">
+                                <h4 class="text-sm font-semibold text-amber-600 dark:text-amber-400 flex items-center space-x-2">
+                                    <i data-lucide="trending-up" class="w-4 h-4"></i>
+                                    <span>Kambag'allikni Yo'qotish</span>
+                                </h4>
+                                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                    Ehtiyojmand xonadonlarda ixcham bedanachilik va kasanachilik kooperatsiyasini yo'lga qo'yish orqali kambag'allik darajasini past darajada saqlash.
+                                </p>
+                            </div>
+                            <div class="glass-card p-5 rounded-xl space-y-2">
+                                <h4 class="text-sm font-semibold text-sky-600 dark:text-sky-400 flex items-center space-x-2">
+                                    <i data-lucide="factory" class="w-4 h-4"></i>
+                                    <span>Mahallani Ixtisoslashtirish</span>
+                                </h4>
+                                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                    5 ga zaxira yerida **Kichik Texnopark va Kooperatsiyalar** tashkil etish orqali hududni Shahar Sanoatiga va xizmat ko'rsatishga ixtisoslashtirish.
+                                </p>
+                            </div>
+                            <div class="glass-card p-5 rounded-xl space-y-2">
+                                <h4 class="text-sm font-semibold text-emerald-600 dark:text-emerald-400 flex items-center space-x-2">
+                                    <i data-lucide="shield" class="w-4 h-4"></i>
+                                    <span>Jinoyatchilik Profilaktikasi</span>
+                                </h4>
+                                <p class="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
+                                    10 ta kuzatuv kamerasini AI videotahlil tizimiga ulab, tunu kun avtomatik monitoring olib borish va "Yashil hudud" ko'rsatkichini saqlash.
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- YIL BOSHIGA NISBATAN REJALARNING BAJARILISH KO'RSATKICHLARI (KPI) -->
+                    <div class="glass-panel rounded-2xl p-6 border border-sky-500/30">
+                        <div class="flex items-center justify-between mb-6 pb-4 border-b border-slate-200 dark:border-slate-800">
+                            <div class="flex items-center space-x-3">
+                                <div class="p-2.5 bg-sky-500/20 text-sky-600 dark:text-sky-400 rounded-xl border border-sky-500/30">
+                                    <i data-lucide="target" class="w-6 h-6"></i>
+                                </div>
+                                <div>
+                                    <h3 class="text-lg font-bold text-slate-900 dark:text-white">Yillik KPI va Rejalarning Bajarilish Ko'rsatkichlari</h3>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400">Yil boshiga nisbatan o'sish dinamikasi va imtiyozli kreditlar limiti monitoringi</p>
+                                </div>
+                            </div>
+                            <span class="text-xs bg-sky-500/10 text-sky-600 dark:text-sky-400 border border-sky-500/30 px-3 py-1.5 rounded-full font-semibold">2026-Yil Reja Ijrosi</span>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                            <div class="glass-card p-5 rounded-xl space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Tadbirkorlik O'sishi</span>
+                                    <span class="text-xs bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 font-bold px-2 py-0.5 rounded border border-emerald-500/30">+5 ta Yangi Subyekt</span>
+                                </div>
+                                <div class="flex items-baseline space-x-2">
+                                    <h4 class="text-2xl font-bold text-slate-900 dark:text-white">125%</h4>
+                                    <span class="text-xs text-slate-500 dark:text-slate-400">/ Bajarilish Darajasi</span>
+                                </div>
+                                <div class="w-full bg-slate-200 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                                    <div class="bg-gradient-to-r from-blue-500 to-emerald-400 h-full rounded-full" style="width: 100%;"></div>
+                                </div>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400">Yil boshiga nisbatan tadbirkorlik subyektlari soni oshirildi.</p>
+                            </div>
+
+                            <div class="glass-card p-5 rounded-xl space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Kambag'allik Darajasi</span>
+                                    <span class="text-xs bg-sky-500/20 text-sky-600 dark:text-sky-400 font-bold px-2 py-0.5 rounded border border-sky-500/30">-2.0% Pasayish</span>
+                                </div>
+                                <div class="flex items-baseline space-x-2">
+                                    <h4 class="text-2xl font-bold text-emerald-600 dark:text-emerald-400">1.0%</h4>
+                                    <span class="text-xs text-slate-500 dark:text-slate-400">/ Yil boshida: 3.0%</span>
+                                </div>
+                                <div class="w-full bg-slate-200 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                                    <div class="bg-gradient-to-r from-amber-500 to-emerald-400 h-full rounded-full" style="width: 100%;"></div>
+                                </div>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400">Reja bo'yicha erishilgan natija: <span class="text-emerald-600 dark:text-emerald-400 font-bold">125%</span></p>
+                            </div>
+
+                            <div class="glass-card p-5 rounded-xl space-y-3">
+                                <div class="flex justify-between items-center">
+                                    <span class="text-xs font-semibold text-slate-500 dark:text-slate-400">Imtiyozli Kreditlar va Limit</span>
+                                    <span class="text-xs bg-amber-500/20 text-amber-600 dark:text-amber-400 font-bold px-2 py-0.5 rounded border border-amber-500/30">Qoldiq: 10 Mln</span>
+                                </div>
+                                <div class="flex items-baseline space-x-2">
+                                    <h4 class="text-2xl font-bold text-amber-600 dark:text-amber-400">80 Mln</h4>
+                                    <span class="text-xs text-slate-500 dark:text-slate-400">/ Limit: 90 Mln So'm</span>
+                                </div>
+                                <div class="w-full bg-slate-200 dark:bg-slate-800 h-2.5 rounded-full overflow-hidden">
+                                    <div class="bg-gradient-to-r from-emerald-500 to-amber-400 h-full rounded-full" style="width: 88.8%;"></div>
+                                </div>
+                                <p class="text-[11px] text-slate-500 dark:text-slate-400">O'zlashtirish: <span class="text-amber-600 dark:text-amber-400 font-bold">88.8%</span> (10 Mln so'm limit qoldig'i)</p>
+                            </div>
+                        </div>
+
+                        <div class="pt-4 border-t border-slate-200 dark:border-slate-800">
+                            <h4 class="text-sm font-bold text-slate-900 dark:text-white mb-3 flex items-center space-x-2">
+                                <i data-lucide="award" class="w-4 h-4 text-amber-500 dark:text-amber-400"></i>
+                                <span>Ilg'or Tajribalar va Innovatsiyalar (Best Practices)</span>
+                            </h4>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                                <div class="glass-card p-4 rounded-xl flex items-start space-x-3">
+                                    <div class="p-2 bg-indigo-500/10 text-indigo-600 dark:text-indigo-400 rounded-lg flex-shrink-0">
+                                        <i data-lucide="layers" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-bold text-slate-900 dark:text-white">"Bir Mahalla — Bir Mahsulot" Dasturi</p>
+                                        <p class="text-xs text-slate-600 dark:text-slate-300 mt-1">
+                                            Mahallada ishlab chiqarish va xizmat ko'rsatish zanjirini mahalliy kooperatsiyalar orqali yagona brend ostida shakllantirish.
+                                        </p>
+                                    </div>
+                                </div>
+
+                                <div class="glass-card p-4 rounded-xl flex items-start space-x-3">
+                                    <div class="p-2 bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 rounded-lg flex-shrink-0">
+                                        <i data-lucide="egg" class="w-5 h-5"></i>
+                                    </div>
+                                    <div>
+                                        <p class="text-xs font-bold text-slate-900 dark:text-white">Bedanachilik va Kasanachilik Kooperatsiyasi</p>
+                                        <p class="text-xs text-slate-600 dark:text-slate-300 mt-1">
+                                            Xonadonlarda kam joy va kam xarajat talab qiladigan bedanachilik hamda tikuv/hunarmandchilik kasanachiligini tashkil etish orqali oilalar daromadini oshirish.
+                                        </p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- TAB: OBODONLASHTIRISH VA EKO-PASPORT MODULI -->
+                <div id="tab-obod" class="tab-content space-y-6">
+                    
+                    <!-- KPI Cards Section -->
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                        <div class="glass-card p-4 rounded-xl">
+                            <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">JAMI XONADONLAR</p>
+                            <h3 class="text-2xl font-bold text-slate-900 dark:text-white mt-1">661 ta</h3>
+                        </div>
+                        <div class="glass-card p-4 rounded-xl">
+                            <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">NAMUNALI (EKO)</p>
+                            <h3 class="text-2xl font-bold text-emerald-500 mt-1" id="stat-ok-count">485 ta (73%)</h3>
+                        </div>
+                        <div class="glass-card p-4 rounded-xl">
+                            <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">JARAYONDA</p>
+                            <h3 class="text-2xl font-bold text-amber-500 mt-1" id="stat-process-count">132 ta (20%)</h3>
+                        </div>
+                        <div class="glass-card p-4 rounded-xl">
+                            <p class="text-xs text-slate-500 dark:text-slate-400 font-medium">E'TIBOR TALAB</p>
+                            <h3 class="text-2xl font-bold text-rose-500 mt-1" id="stat-bad-count">44 ta (7%)</h3>
+                        </div>
+                    </div>
+
+                    <!-- Main Interactive Grid Section -->
+                    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+                        
+                        <!-- 3D Interactive Map Area -->
+                        <div class="lg:col-span-2 glass-panel p-6 rounded-2xl space-y-4">
+                            <div class="flex flex-wrap items-center justify-between gap-3">
+                                <h3 class="text-base font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+                                    <i data-lucide="boxes" class="w-5 h-5 text-sky-500"></i>
+                                    <span>Gibrid 3D Xonadonlar Indikatori</span>
+                                </h3>
+                                
+                                <div class="flex flex-wrap items-center gap-2">
+                                    <select id="streetSelect" onchange="filterGrid()" class="bg-slate-200 dark:bg-slate-900 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700 text-xs rounded-lg p-2 outline-none">
+                                        <option value="all">Barcha koʻchalar (20 ta)</option>
+                                        <option value="Sartyuz">Sartyuz</option>
+                                        <option value="Piskom 1 o‘tar">Piskom 1 o‘tar</option>
+                                        <option value="Qalmoq">Qalmoq</option>
+                                        <option value="Ko‘k dala">Ko‘k dala</option>
+                                        <option value="Umaqay">Umaqay</option>
+                                        <option value="Aqchasoy">Aqchasoy</option>
+                                        <option value="Rangikamon">Rangikamon</option>
+                                        <option value="Murabbiylar">Murabbiylar</option>
+                                        <option value="Yangi xayot">Yangi xayot</option>
+                                        <option value="Pungan">Pungan</option>
+                                        <option value="Mang‘it">Mang‘it</option>
+                                        <option value="Aeroport">Aeroport</option>
+                                        <option value="M.Shoxtepa">M.Shoxtepa</option>
+                                        <option value="Shoxtepa 1-o‘tar">Shoxtepa 1-o‘tar</option>
+                                        <option value="Shoxtepa 2-o‘tar">Shoxtepa 2-o‘tar</option>
+                                        <option value="Shoxtepa 3-o‘tar">Shoxtepa 3-o‘tar</option>
+                                        <option value="Shoxtepa 4-o‘tar">Shoxtepa 4-o‘tar</option>
+                                        <option value="Yangi avlod">Yangi avlod</option>
+                                        <option value="Yangi hayot o‘tar">Yangi hayot o‘tar</option>
+                                        <option value="Yangi hayot 1 berk">Yangi hayot 1 berk</option>
+                                    </select>
+
+                                    <select id="statusSelect" onchange="filterGrid()" class="bg-slate-200 dark:bg-slate-900 text-slate-800 dark:text-slate-200 border border-slate-300 dark:border-slate-700 text-xs rounded-lg p-2 outline-none">
+                                        <option value="all">Barcha holatlar</option>
+                                        <option value="status-ok">🟢 Namunali</option>
+                                        <option value="status-process">🟡 Jarayonda</option>
+                                        <option value="status-bad">🔴 E'tibor talab</option>
+                                    </select>
+                                </div>
+                            </div>
+
+                            <div class="isometric-grid" id="houseGrid">
+                                <!-- 3D Bloklar JS orqali avtomatik yaratiladi -->
+                            </div>
+                        </div>
+
+                        <!-- Side Panel: Eko-Pasport -->
+                        <div class="glass-panel p-6 rounded-2xl space-y-4">
+                            <div>
+                                <h3 class="text-base font-bold text-slate-900 dark:text-white">Xonadon Eko-Pasporti</h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">3D blok ustiga bosib xonadon ma'lumotlarini ko'ring va holatini ozgartiring.</p>
+                            </div>
+
+                            <div class="glass-card p-5 rounded-xl space-y-4" id="passportDetail">
+                                <div>
+                                    <span class="inline-block px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-500/20 text-emerald-500 border border-emerald-500/30" id="pBadge">🟢 Namunali xonadon</span>
+                                    <h2 id="pHouseNo" class="text-lg font-bold text-slate-900 dark:text-white mt-2">Sartyuz k., 12-uy</h2>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-0.5" id="pResponsible">Mas'ul: MFY Ko'cha boshi</p>
+                                </div>
+                                
+                                <hr class="border-slate-200 dark:border-slate-700">
+
+                                <div>
+                                    <h4 class="text-xs font-bold text-slate-700 dark:text-slate-300 uppercase tracking-wider mb-2">Obodonlashtirish Mezonlari:</h4>
+                                    <ul class="space-y-2 text-xs text-slate-600 dark:text-slate-300" id="pChecklist">
+                                        <!-- Check-list dinamik shakllanadi -->
+                                    </ul>
+                                </div>
+
+                                <!-- AMALLAR VA STATUS TUGMALARI -->
+                                <div class="space-y-2 pt-2">
+                                    <div class="grid grid-cols-2 gap-2">
+                                        <button onclick="confirmAllCriteria()" class="py-2.5 bg-emerald-600 hover:bg-emerald-500 text-white font-bold rounded-xl text-xs transition shadow-lg shadow-emerald-600/20 flex items-center justify-center space-x-1">
+                                            <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                                            <span>Bajarilgan (🟢)</span>
+                                        </button>
+                                        <button onclick="markAsUndone()" class="py-2.5 bg-rose-600 hover:bg-rose-500 text-white font-bold rounded-xl text-xs transition shadow-lg shadow-rose-600/20 flex items-center justify-center space-x-1">
+                                            <i data-lucide="x-circle" class="w-3.5 h-3.5"></i>
+                                            <span>Bajarilmagan (🔴)</span>
+                                        </button>
+                                    </div>
+                                    <button onclick="alert('AI topshiriq shakllantirildi va mas\'ullarga yuborildi!')" class="w-full py-2.5 bg-sky-600 hover:bg-sky-500 text-white font-bold rounded-xl text-xs transition shadow-lg shadow-sky-600/30 flex items-center justify-center space-x-1.5">
+                                        <i data-lucide="bot" class="w-4 h-4"></i>
+                                        <span>AI Topshiriq Yuborish</span>
+                                    </button>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+
+                </div>
+
+                <!-- TAB 2: MAHALLA YETTILIGI -->
+                <div id="tab-yettilik" class="tab-content space-y-6">
+                    <div class="glass-panel rounded-2xl p-6">
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-5">Mahalla "Yettiligi + 1" Boshqaruv Shtabi</h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4" id="grid-yettilik">
+                            <!-- JS orqali fill qilinadi -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 3: EHTIYOJMAND OILALAR -->
+                <div id="tab-ehtiyojmand" class="tab-content space-y-6">
+                    <div class="glass-panel rounded-2xl p-6">
+                        <div class="flex flex-col md:flex-row md:items-center md:justify-between mb-5 gap-3">
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">9 ta Ehtiyojmand Oila Bo'yicha AI Manzilli Harakat Rejalari</h3>
+                            
+                            <a href="https://mahkambekpolatov-tech.github.io/Smart_ai_hodim/" target="_blank" class="inline-flex items-center space-x-2 bg-gradient-to-r from-sky-500 to-blue-600 hover:from-sky-400 hover:to-blue-500 text-white text-xs font-bold px-4 py-2 rounded-xl shadow-lg shadow-sky-500/20 transition-all hover:scale-[1.03]">
+                                <i data-lucide="user-check" class="w-4 h-4"></i>
+                                <span>Individual ishlash</span>
+                                <i data-lucide="external-link" class="w-3.5 h-3.5 opacity-70"></i>
+                            </a>
+                        </div>
+
+                        <div class="overflow-x-auto">
+                            <table class="w-full text-left text-sm text-slate-700 dark:text-slate-300">
+                                <thead class="bg-slate-200/80 dark:bg-slate-900/80 text-xs uppercase text-slate-600 dark:text-slate-400 border-b border-slate-300 dark:border-slate-700/80">
+                                    <tr>
+                                        <th class="p-3">#</th>
+                                        <th class="p-3">F.I.SH / Manzil</th>
+                                        <th class="p-3">Toifa</th>
+                                        <th class="p-3">Haqiqiy Holati</th>
+                                        <th class="p-3">AI Manzilli Reja</th>
+                                        <th class="p-3 text-center">Amal</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="table-ehtiyojmand" class="divide-y divide-slate-200 dark:divide-slate-800/60">
+                                    <!-- JS orqali fill qilinadi -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 4: TADBIRKORLIK & YER -->
+                <div id="tab-tadbirkorlik" class="tab-content space-y-6">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <div class="glass-panel rounded-2xl p-6">
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">17 ta Tadbirkorlik Subyekti</h3>
+                            <ul class="space-y-3 text-sm text-slate-700 dark:text-slate-300" id="list-tadbirkorlar">
+                                <!-- JS orqali fill qilinadi -->
+                            </ul>
+                        </div>
+                        <div class="glass-panel rounded-2xl p-6">
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">5 ga Zaxira Yer Maydoni (Toshkent Sh.)</h3>
+                            <div class="space-y-4 text-sm">
+                                <div class="glass-card p-4 rounded-xl">
+                                    <p class="font-semibold text-sky-600 dark:text-sky-400">2.5 ga - Kichik Texnopark</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Shovqinsiz mebel, tekstil, poligrafiya va avtoservis sexlari.</p>
+                                </div>
+                                <div class="glass-card p-4 rounded-xl">
+                                    <p class="font-semibold text-emerald-600 dark:text-emerald-400">1.5 ga - Bedanachilik va Agro-Texnologiyalar</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Bedanachilik fermasi va ixcham issiqxonalar.</p>
+                                </div>
+                                <div class="glass-card p-4 rounded-xl">
+                                    <p class="font-semibold text-amber-600 dark:text-amber-400">1.0 ga - Sport va Servis Majmuasi</p>
+                                    <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Aholiga maishiy xizmat ko'rsatish pavilyonlari.</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 5: MIGRANTLAR -->
+                <div id="tab-migrantlar" class="tab-content space-y-6">
+                    <div class="glass-panel rounded-2xl p-6">
+                        <h3 class="text-lg font-bold text-slate-900 dark:text-white mb-4">10 Nafar Muvaffaqiyatli Mehnat Migranti</h3>
+                        <div class="glass-card p-5 rounded-xl">
+                            <p class="text-sm text-slate-700 dark:text-slate-300 leading-relaxed">
+                                Tizim xorijdagi 10 nafar fuqaroning jamg'armalarini mahalladagi 5 ga zaxira yerda quriladigan Kichik Texnoparkka **investor sifatida jalb qilish** va ularning Tovkentepada yashayotgan oilalarini kasanachilikka biriktirish rejasini yuritadi.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- TAB 6: XAVFSIZLIK & 10 TA KAMERA MONITORIGI -->
+                <div id="tab-xavfsizlik" class="tab-content space-y-6">
+                    <div class="glass-panel rounded-2xl p-6 space-y-6">
+                        <div class="flex items-center justify-between">
+                            <h3 class="text-lg font-bold text-slate-900 dark:text-white">10 ta Kuzatuv Kamerasi Monitoringi</h3>
+                            <span class="text-xs bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 px-3 py-1 rounded-full border border-emerald-500/30">Status: Barcha kameralar faol</span>
+                        </div>
+                        <div class="grid grid-cols-2 md:grid-cols-5 gap-4" id="grid-kameralar">
+                            <!-- JS orqali fill qilinadi -->
+                        </div>
+
+                        <div class="glass-card rounded-xl p-5 border border-sky-500/30 space-y-3">
+                            <div class="flex items-center space-x-3">
+                                <div class="p-2 bg-sky-500/20 text-sky-600 dark:text-sky-400 rounded-lg">
+                                    <i data-lucide="sparkles" class="w-5 h-5"></i>
+                                </div>
+                                <h4 class="text-sm font-bold text-slate-900 dark:text-white">Xavfsizlik va Videotahlil Bo'yicha AI Tavsiyalari</h4>
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 pt-2">
+                                <div class="bg-slate-200/60 dark:bg-slate-900/60 p-3.5 rounded-lg border border-slate-300 dark:border-slate-800">
+                                    <p class="text-xs font-semibold text-emerald-600 dark:text-emerald-400 flex items-center space-x-1.5">
+                                        <i data-lucide="shield-alert" class="w-3.5 h-3.5"></i>
+                                        <span>Tungi Nazoratni Kuchaytirish</span>
+                                    </p>
+                                    <p class="text-[11px] text-slate-600 dark:text-slate-300 mt-1">
+                                        Pungan va Murabbiylar ko'chasi kesishmasidagi kameralar yordamida keki paytlardagi harakatlarni avtomatik rejimda qat'iy nazorat qilish.
+                                    </p>
+                                </div>
+                                <div class="bg-slate-200/60 dark:bg-slate-900/60 p-3.5 rounded-lg border border-slate-300 dark:border-slate-800">
+                                    <p class="text-xs font-semibold text-sky-600 dark:text-sky-400 flex items-center space-x-1.5">
+                                        <i data-lucide="video" class="w-3.5 h-3.5"></i>
+                                        <span>Smart Ovozli Ogohlantirish</span>
+                                    </p>
+                                    <p class="text-[11px] text-slate-600 dark:text-slate-300 mt-1">
+                                        Maktab va aholi zich yashaydigan hududlardagi kameralarga harakat sensorlarini moslashtirib, profilaktika inspektoriga onlayn xabar berishni faollashtirish.
+                                    </p>
+                                </div>
+                                <div class="bg-slate-200/60 dark:bg-slate-900/60 p-3.5 rounded-lg border border-slate-300 dark:border-slate-800">
+                                    <p class="text-xs font-semibold text-amber-600 dark:text-amber-400 flex items-center space-x-1.5">
+                                        <i data-lucide="check-circle" class="w-3.5 h-3.5"></i>
+                                        <span>"Yashil Hudud" Barqarorligi</span>
+                                    </p>
+                                    <p class="text-[11px] text-slate-600 dark:text-slate-300 mt-1">
+                                        Jinoyatchilikni 0 darajada saqlab qolish uchun jamoatchilik nazorati maskanlari bilan kameralar bazasini yagona tarmoqqa jamlash.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                    </div>
+                </div>
+
+                <!-- TAB 7: SHAXSIY KABINET VA INTEGRATSIYA QILINGAN ADMIN PANEL -->
+                <div id="tab-profile" class="tab-content space-y-6">
+                    <div class="glass-panel rounded-2xl p-6 border border-slate-200 dark:border-slate-800 flex flex-col md:flex-row items-center justify-between gap-6">
+                        <div class="flex items-center space-x-5">
+                            <div class="w-20 h-20 bg-gradient-to-tr from-sky-500 to-emerald-500 rounded-2xl flex items-center justify-center text-white text-2xl font-bold shadow-lg shadow-sky-500/20">
+                                PM
+                            </div>
+                            <div>
+                                <div class="flex items-center space-x-3">
+                                    <h3 class="text-xl font-bold text-slate-900 dark:text-white" id="profile-card-name">Po‘latov Mahkambek Abduvali o‘g‘li</h3>
+                                    <span class="px-2.5 py-0.5 rounded-full text-[10px] font-bold bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30">SUPER ADMIN</span>
+                                </div>
+                                <p class="text-sm text-sky-600 dark:text-sky-400 font-medium mt-0.5">Tovkentepa MFY - Hokim yordamchisi</p>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1 flex items-center space-x-2">
+                                    <i data-lucide="phone" class="w-3.5 h-3.5"></i>
+                                    <span id="profile-card-phone">+998998659244</span>
+                                </p>
+                            </div>
+                        </div>
+                        <div class="flex items-center space-x-3 w-full md:w-auto">
+                            <button onclick="saveAdminChanges()" class="w-full md:w-auto px-6 py-3 bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold rounded-xl text-sm transition shadow-lg shadow-emerald-900/40 flex items-center justify-center space-x-2">
+                                <i data-lucide="save" class="w-4 h-4"></i>
+                                <span>O'zgarishlarni Saqlash</span>
+                            </button>
+                        </div>
+                    </div>
+
+                    <div class="glass-panel border border-emerald-500/30 rounded-2xl p-6 shadow-2xl space-y-6">
+                        <div class="flex items-center justify-between pb-4 border-b border-slate-200 dark:border-slate-800">
+                            <div>
+                                <h3 class="text-lg font-bold text-slate-900 dark:text-white flex items-center space-x-2">
+                                    <i data-lucide="sliders" class="w-5 h-5 text-emerald-500"></i>
+                                    <span>Tizim Boshqaruvi va KPI Sozlamalari (Admin Paneli)</span>
+                                </h3>
+                                <p class="text-xs text-slate-500 dark:text-slate-400 mt-1">Shaxsiy kabinetingiz orqali platformaning barcha ko'rsatkichlarini onlayn tahrirlashingiz mumkin.</p>
+                            </div>
+                        </div>
+
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="glass-card p-5 rounded-xl space-y-4">
+                                <h4 class="text-xs font-bold text-emerald-600 dark:text-emerald-400 uppercase tracking-wider flex items-center space-x-1.5">
+                                    <i data-lucide="user-check" class="w-4 h-4"></i>
+                                    <span>1. Profil Ma'lumotlarini Tahrirlash</span>
+                                </h4>
+                                <div>
+                                    <label class="text-xs text-slate-500 dark:text-slate-400">Mas'ul F.I.SH</label>
+                                    <input type="text" id="inp-hy-name" value="Po‘latov Mahkambek Abduvali o‘g‘li" class="w-full mt-1 bg-white dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 outline-none">
+                                </div>
+                                <div>
+                                    <label class="text-xs text-slate-500 dark:text-slate-400">Telefon Raqami</label>
+                                    <input type="text" id="inp-hy-phone" value="+998998659244" class="w-full mt-1 bg-white dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700 rounded-lg p-2.5 text-sm text-slate-900 dark:text-white focus:border-emerald-500 outline-none">
+                                </div>
+                            </div>
+
+                            <div class="glass-card p-5 rounded-xl space-y-4">
+                                <h4 class="text-xs font-bold text-sky-600 dark:text-sky-400 uppercase tracking-wider flex items-center space-x-1.5">
+                                    <i data-lucide="database" class="w-4 h-4"></i>
+                                    <span>2. Mahalla Asosiy Ko'rsatkichlari (KPI)</span>
+                                </h4>
+                                <div class="grid grid-cols-3 gap-3">
+                                    <div>
+                                        <label class="text-[11px] text-slate-500 dark:text-slate-400">Aholi Soni</label>
+                                        <input type="number" id="inp-aholi" value="2464" class="w-full mt-1 bg-white dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-xs text-slate-900 dark:text-white focus:border-emerald-500 outline-none">
+                                    </div>
+                                    <div>
+                                        <label class="text-[11px] text-slate-500 dark:text-slate-400">Oilalar Soni</label>
+                                        <input type="number" id="inp-oila" value="697" class="w-full mt-1 bg-white dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-xs text-slate-900 dark:text-white focus:border-emerald-500 outline-none">
+                                    </div>
+                                    <div>
+                                        <label class="text-[11px] text-slate-500 dark:text-slate-400">Xonadonlar</label>
+                                        <input type="number" id="inp-xonadon" value="661" class="w-full mt-1 bg-white dark:bg-slate-900/90 border border-slate-300 dark:border-slate-700 rounded-lg p-2 text-xs text-slate-900 dark:text-white focus:border-emerald-500 outline-none">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+
+            </div>
+        </main>
+    </div>
+
+    <!-- JAVASCRIPT LOGIKA VA BAZA -->
+    <script>
+        lucide.createIcons();
+
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme');
+            if (savedTheme === 'light') {
+                document.documentElement.classList.remove('dark');
+            } else {
+                document.documentElement.classList.add('dark');
+            }
+        }
+
+        function toggleTheme() {
+            if (document.documentElement.classList.contains('dark')) {
+                document.documentElement.classList.remove('dark');
+                localStorage.setItem('theme', 'light');
+            } else {
+                document.documentElement.classList.add('dark');
+                localStorage.setItem('theme', 'dark');
+            }
+            lucide.createIcons();
+        }
+
+        let isSidebarCollapsed = false;
+        function toggleSidebar() {
+            const sidebar = document.getElementById('sidebar');
+            const toggleIcon = document.getElementById('toggle-icon');
+            
+            isSidebarCollapsed = !isSidebarCollapsed;
+            
+            if(isSidebarCollapsed) {
+                sidebar.classList.remove('sidebar-expanded');
+                sidebar.classList.add('sidebar-collapsed');
+                toggleIcon.setAttribute('data-lucide', 'panel-left-open');
+            } else {
+                sidebar.classList.remove('sidebar-collapsed');
+                sidebar.classList.add('sidebar-expanded');
+                toggleIcon.setAttribute('data-lucide', 'panel-left-close');
+            }
+            lucide.createIcons();
+        }
+
+        // DATABASE
+        const db = {
+            yettilik: [
+                { title: "Mahalla raisi", name: "Utegenov Abduvali", phone: "+998971671323" },
+                { title: "Hokim yordamchisi", name: "Po‘latov Mahkambek", phone: "+998998659244" },
+                { title: "Yoshlar yetakchisi", name: "Smanova Zarina", phone: "+998996086818" },
+                { title: "Xotin-qizlar faoli", name: "Beysenova Guljan", phone: "+998977153684" },
+                { title: "Profilaktika inspektori", name: "Karimov Xojiakbar", phone: "+998999855048" },
+                { title: "Ijtimoiy xodim", name: "Kamilova Indira", phone: "+998909242317" },
+                { title: "Soliq inspektori", name: "Boboyev Murodullo", phone: "+998935324284" },
+                { title: "Mahalla bankiri", name: "Turayev Zafar", phone: "+998930002569" }
+            ],
+            ehtiyojmand: [
+                { id: 1, name: "Bobomuradova Shaxnoza", address: "Yangi hayot, 18", status: "Qizil", desc: "3 ta yosh farzandli yolg'iz ona", plan: "MTMga biriktirish, bedanachilik va kasanachilikka tushirish" },
+                { id: 2, name: "Usmonova Hilola", address: "Shoxtepa 4-o'tar, 6", status: "Sariq", desc: "4 farzand, eri norasmiy taksichi", plan: "ZAGS rasmiylashtiruvi, pishiriqchilik va kasanachilik" },
+                { id: 3, name: "Mamirova Nagima", address: "Murabbiylar, 136", status: "Yashil", desc: "Er-xotin nogiron pensionerlar", plan: "Tibbiy patronaj, ixcham bedanachilik kooperatsiyasiga biriktirish" },
+                { id: 4, name: "Maxmuratov Nurmuxamad", address: "Pungan, 2", status: "Qizil", desc: "56 yoshli aqlan zaif fuqaro", plan: "Davlat nafaqasi, qaramog'idagi aka-ukalariga imtiyoz" },
+                { id: 5, name: "Xamroqulova Xilola", address: "Shoxtepa 4-o'tar, 6", status: "Sariq", desc: "Aqlan zaif 9 yoshli qizi bor", plan: "Inklyuziv ta'lim, onaga erkin grafikli kasanachilik" },
+                { id: 6, name: "Umarova Ziyoda", address: "Murabbiylar, 142", status: "Qizil", desc: "Eri va 1 yoshli bolasi surunkali bemor", plan: "Bepul davolanish (Order), onaga yengil uy kasanachiligi" },
+                { id: 7, name: "Shamaxmudova Adiba", address: "Murabbiylar, 166", status: "Qizil", desc: "Vafot etgan (RAK)", plan: "Platforma xatoligini to'g'rilash va reyestrdan chiqarish" },
+                { id: 8, name: "Ergasheva Ozoda", address: "Murabbiylar, 166", status: "Yashil", desc: "Yolg'iz ona (2 farzand)", plan: "Uy kasanachiligi va bedana tuxumi yetkazib berish" },
+                { id: 9, name: "Ag'ajanova Umida", address: "Pungan, 8", status: "Sariq", desc: "4 nafar yosh bola (0-4 yosh)", plan: "Tomorqa/ixcham parrandachilik, onaga onlayn-kasanachilik" }
+            ],
+            tadbirkorlar: [
+                "<b>2 ta Kafe:</b> 'Akmal baliq', 'Besh fish house'",
+                "<b>4 ta Ishlab chiqarish:</b> 2 ta Novvoyxona, 1 ta Porolon sexi, 1 ta Tikuvchilik sexi",
+                "<b>1 ta Tibbiyot:</b> 'Humo' MCHJ xususiy klinikasi",
+                "<b>10 ta Savdo/Maishiy:</b> Oziq-ovqat va maishiy xizmat shaxobchalari"
+            ],
+            kameralar: [
+                "1-Kamera: MFY binosi chorraha",
+                "2-Kamera: Maktab zonasi (2.2km)",
+                "3-Kamera: Yangi massiv (176 xonadon)",
+                "4-Kamera: Pungan ko'chasi kirish",
+                "5-Kamera: Murabbiylar ko'chasi",
+                "6-Kamera: Shoxtepa ko'chasi",
+                "7-Kamera: Yangi hayot ko'chasi",
+                "8-Kamera: 5 ga zaxira yer zonasi",
+                "9-Kamera: Bozor/Savdo shahobchasi",
+                "10-Kamera: MFY chiqish nazorati"
+            ]
+        };
+
+        // 661 TA XONADON UCHUN EKO-PASPORT SCRIPT LOGIKASI
+        const streets = [
+            "Sartyuz", "Piskom 1 o‘tar", "Qalmoq", "Ko‘k dala", "Umaqay", 
+            "Aqchasoy", "Rangikamon", "Murabbiylar", "Yangi xayot", "Pungan", 
+            "Mang‘it", "Aeroport", "M.Shoxtepa", "Shoxtepa 1-o‘tar", "Shoxtepa 2-o‘tar", 
+            "Shoxtepa 3-o‘tar", "Shoxtepa 4-o‘tar", "Yangi avlod", "Yangi hayot o‘tar", "Yangi hayot 1 berk"
+        ];
+
+        let selectedHouseId = 1;
+        const houseData = [];
+
+        for (let i = 1; i <= 661; i++) {
+            const street = streets[(i - 1) % streets.length];
+            
+            let status = 'status-ok';
+            if (i % 5 === 0) status = 'status-process';
+            if (i % 15 === 0) status = 'status-bad';
+
+            houseData.push({
+                id: i,
+                street: street,
+                houseNo: (i % 45) + 1,
+                status: status,
+                responsible: "MFY Ko'cha boshi",
+                criteria: [
+                    { id: 1, text: "Fasad va devorlar tartiblangan", status: status === 'status-ok' },
+                    { id: 2, text: "Yashil hudud va tomorqa mavjud", status: status !== 'status-bad' },
+                    { id: 3, text: "Chiqindi va sanitariya holati a'lo", status: status === 'status-ok' },
+                    { id: 4, text: "Ariqlar tozalangan", status: status !== 'status-bad' }
+                ]
+            });
+        }
+
+        function renderGrid(data) {
+            const grid = document.getElementById('houseGrid');
+            if(!grid) return;
+            grid.innerHTML = '';
+
+            data.forEach(item => {
+                const block = document.createElement('div');
+                block.className = `house-block ${item.status}`;
+                block.setAttribute('data-street', item.street);
+                block.setAttribute('data-status', item.status);
+                
+                block.innerHTML = `<div class="top" title="${item.street}, ${item.houseNo}-uy"></div>`;
+                
+                block.onclick = () => showPassport(item);
+                grid.appendChild(block);
+            });
+
+            updateStatCounts();
+        }
+
+        function updateStatCounts() {
+            const okCount = houseData.filter(h => h.status === 'status-ok').length;
+            const processCount = houseData.filter(h => h.status === 'status-process').length;
+            const badCount = houseData.filter(h => h.status === 'status-bad').length;
+
+            const total = houseData.length;
+            document.getElementById('stat-ok-count').innerText = `${okCount} ta (${Math.round(okCount/total*100)}%)`;
+            document.getElementById('stat-process-count').innerText = `${processCount} ta (${Math.round(processCount/total*100)}%)`;
+            document.getElementById('stat-bad-count').innerText = `${badCount} ta (${Math.round(badCount/total*100)}%)`;
+        }
+
+        function showPassport(item) {
+            selectedHouseId = item.id;
+            document.getElementById('pHouseNo').innerText = `${item.street}, ${item.houseNo}-uy`;
+            document.getElementById('pResponsible').innerText = `Mas'ul: ${item.responsible}`;
+            
+            const badge = document.getElementById('pBadge');
+
+            if (item.status === 'status-ok') {
+                badge.className = 'inline-block px-2.5 py-1 rounded-md text-xs font-bold bg-emerald-500/20 text-emerald-500 border border-emerald-500/30';
+                badge.innerText = '🟢 Namunali xonadon';
+            } else if (item.status === 'status-process') {
+                badge.className = 'inline-block px-2.5 py-1 rounded-md text-xs font-bold bg-amber-500/20 text-amber-500 border border-amber-500/30';
+                badge.innerText = '🟡 Jarayonda (Hashar)';
+            } else {
+                badge.className = 'inline-block px-2.5 py-1 rounded-md text-xs font-bold bg-rose-500/20 text-rose-500 border border-rose-500/30';
+                badge.innerText = '🔴 E\'tibor talab (Bajarilmagan)';
+            }
+
+            renderChecklist(item);
+        }
+
+        function renderChecklist(item) {
+            const checklist = document.getElementById('pChecklist');
+            checklist.innerHTML = '';
+
+            item.criteria.forEach(c => {
+                const li = document.createElement('li');
+                li.className = 'flex items-center justify-between p-2 rounded-lg bg-slate-200/50 dark:bg-slate-900/50 hover:bg-slate-200 dark:hover:bg-slate-800/80 cursor-pointer transition border border-slate-300/50 dark:border-slate-800';
+                li.onclick = () => toggleCriterion(c.id);
+
+                li.innerHTML = `
+                    <div class="flex items-center space-x-2">
+                        <span>${c.status ? '✅' : '⚠️'}</span>
+                        <span class="text-xs ${c.status ? 'text-slate-800 dark:text-slate-200' : 'text-slate-500 dark:text-slate-400'}">${c.text}</span>
+                    </div>
+                    <input type="checkbox" ${c.status ? 'checked' : ''} class="w-3.5 h-3.5 text-emerald-500 bg-transparent pointer-events-none">
+                `;
+                checklist.appendChild(li);
+            });
+        }
+
+        function toggleCriterion(criterionId) {
+            const house = houseData.find(h => h.id === selectedHouseId);
+            if (!house) return;
+
+            const c = house.criteria.find(x => x.id === criterionId);
+            if (c) {
+                c.status = !c.status;
+            }
+
+            const allTrue = house.criteria.every(x => x.status);
+            const anyTrue = house.criteria.some(x => x.status);
+
+            if (allTrue) {
+                house.status = 'status-ok';
+            } else if (anyTrue) {
+                house.status = 'status-process';
+            } else {
+                house.status = 'status-bad';
+            }
+
+            filterGrid();
+            showPassport(house);
+        }
+
+        function confirmAllCriteria() {
+            const house = houseData.find(h => h.id === selectedHouseId);
+            if (!house) return;
+
+            house.criteria.forEach(c => c.status = true);
+            house.status = 'status-ok';
+
+            filterGrid();
+            showPassport(house);
+        }
+
+        // OBODONLASHTIRISH BAJARILMAGAN DEB BELGILASH (QIZIL STATUS)
+        function markAsUndone() {
+            const house = houseData.find(h => h.id === selectedHouseId);
+            if (!house) return;
+
+            house.criteria.forEach(c => c.status = false);
+            house.status = 'status-bad';
+
+            filterGrid();
+            showPassport(house);
+        }
+
+        function filterGrid() {
+            const selectedStreet = document.getElementById('streetSelect').value;
+            const selectedStatus = document.getElementById('statusSelect').value;
+
+            const filtered = houseData.filter(item => {
+                const streetMatch = (selectedStreet === 'all') || (item.street === selectedStreet);
+                const statusMatch = (selectedStatus === 'all') || (item.status === selectedStatus);
+                return streetMatch && statusMatch;
+            });
+
+            renderGrid(filtered);
+        }
+
+        // TAB SWITCHING LOGIC
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.remove('active'));
+            document.querySelectorAll('nav button').forEach(el => el.classList.remove('active-tab'));
+            
+            document.getElementById('tab-' + tabId).classList.add('active');
+            
+            const btn = document.getElementById('btn-' + tabId);
+            if(btn) btn.classList.add('active-tab');
+
+            const titles = {
+                'dashboard': 'Umumiy AI Boshqaruv Paneli',
+                'obod': 'Obodonlashtirish va Koʻkalamzorlashtirish (Eko-Pasport) AI Dashbordi',
+                'yettilik': 'Mahalla "Yettiligi + 1" Boshqaruv Shtabi',
+                'ehtiyojmand': '9 ta Ehtiyojmand Oila Bo\'yicha Manzilli Reja',
+                'tadbirkorlik': 'Biznes Subyektlari va 5 ga Zaxira Yer',
+                'migrantlar': 'Tashqi Mehnat Migratsiyasi (10 Nafar)',
+                'xavfsizlik': 'Xavfsizlik va 10 ta Kuzatuv Kamerasi Monitoringi',
+                'profile': 'Shaxsiy Kabinet va Admin Boshqaruv Paneli'
+            };
+            document.getElementById('page-title').innerText = titles[tabId];
+        }
+
+        // RENDER SYSTEM
+        function renderSystem() {
+            document.getElementById('grid-yettilik').innerHTML = db.yettilik.map(x => `
+                <div class="glass-card p-4 rounded-xl">
+                    <p class="text-xs text-slate-500 dark:text-slate-400">${x.title}</p>
+                    <p class="font-bold text-slate-900 dark:text-white mt-1">${x.name}</p>
+                    <p class="text-xs text-emerald-600 dark:text-emerald-400 mt-2 flex items-center space-x-1">
+                        <i data-lucide="phone" class="w-3 h-3"></i>
+                        <span>${x.phone}</span>
+                    </p>
+                </div>
+            `).join('');
+
+            document.getElementById('table-ehtiyojmand').innerHTML = db.ehtiyojmand.map(x => {
+                const badgeColor = x.status === 'Qizil' ? 'bg-red-500/10 text-red-600 dark:text-red-400 border-red-500/30' : (x.status === 'Sariq' ? 'bg-amber-500/10 text-amber-600 dark:text-amber-400 border-amber-500/30' : 'bg-emerald-500/10 text-emerald-600 dark:text-emerald-400 border-emerald-500/30');
+                return `
+                    <tr class="hover:bg-slate-200/40 dark:hover:bg-slate-800/30 transition">
+                        <td class="p-3 font-bold text-slate-400 dark:text-slate-500">${x.id}</td>
+                        <td class="p-3"><p class="font-semibold text-slate-900 dark:text-white">${x.name}</p><p class="text-xs text-slate-500 dark:text-slate-400">${x.address}</p></td>
+                        <td class="p-3"><span class="px-2.5 py-1 text-xs rounded-full border ${badgeColor}">${x.status}</span></td>
+                        <td class="p-3 text-xs text-slate-600 dark:text-slate-300">${x.desc}</td>
+                        <td class="p-3 text-xs text-sky-600 dark:text-sky-300 font-medium">${x.plan}</td>
+                        <td class="p-3 text-center">
+                            <a href="https://mahkambekpolatov-tech.github.io/Smart_ai_hodim/" target="_blank" class="inline-flex items-center space-x-1.5 px-3 py-1.5 bg-sky-500/10 hover:bg-sky-500/20 text-sky-600 dark:text-sky-400 border border-sky-500/30 rounded-lg text-xs font-semibold transition hover:scale-105">
+                                <i data-lucide="user-check" class="w-3.5 h-3.5"></i>
+                                <span>Individual ishlash</span>
+                            </a>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+
+            document.getElementById('list-tadbirkorlar').innerHTML = db.tadbirkorlar.map(x => `
+                <li class="glass-card p-3 rounded-xl flex items-center space-x-3">
+                    <i data-lucide="check-circle-2" class="w-4 h-4 text-emerald-600 dark:text-emerald-400 flex-shrink-0"></i>
+                    <span>${x}</span>
+                </li>
+            `).join('');
+
+            document.getElementById('grid-kameralar').innerHTML = db.kameralar.map((x) => `
+                <div class="glass-card p-3 rounded-xl text-center">
+                    <div class="w-full h-20 bg-slate-200 dark:bg-slate-950/80 rounded-lg flex items-center justify-center text-slate-400 dark:text-slate-600 mb-2 border border-slate-300 dark:border-slate-800/80 relative">
+                        <i data-lucide="video" class="w-6 h-6"></i>
+                        <span class="absolute top-2 right-2 w-2 h-2 rounded-full bg-emerald-500 dark:bg-emerald-400 animate-pulse"></span>
+                    </div>
+                    <p class="text-xs text-slate-700 dark:text-slate-300 font-semibold">${x}</p>
+                </div>
+            `).join('');
+
+            renderGrid(houseData);
+            if (houseData.length > 0) {
+                showPassport(houseData[0]);
+            }
+            lucide.createIcons();
+        }
+
+        function saveAdminChanges() {
+            const newName = document.getElementById('inp-hy-name').value;
+            const newPhone = document.getElementById('inp-hy-phone').value;
+
+            document.getElementById('val-aholi').innerText = document.getElementById('inp-aholi').value;
+            document.getElementById('val-oila').innerText = document.getElementById('inp-oila').value;
+            document.getElementById('val-xonadon').innerText = document.getElementById('inp-xonadon').value;
+
+            document.getElementById('header-user-name').innerText = newName.split(' ')[0] + ' ' + (newName.split(' ')[1] || '');
+            document.getElementById('profile-card-name').innerText = newName;
+            document.getElementById('profile-card-phone').innerText = newPhone;
+
+            db.yettilik[1].name = newName;
+            db.yettilik[1].phone = newPhone;
+
+            renderSystem();
+            alert("Barcha admin va shaxsiy kabinet o'zgarishlari saqlandi!");
+            switchTab('dashboard');
+        }
+
+        initTheme();
+        renderSystem();
+    </script>
+</body>
+</html>
